@@ -1,9 +1,10 @@
 import React from 'react';
-import { Alert, Card, Col, Container, Row } from 'react-bootstrap';
+import { Alert, Card, Col, Container, Nav, Row, Tab } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { alertsSelector, deleteAlert } from '../slices/alerts';
 import ProjectTypeahead from './ProjectTypeahead';
+import ConfigForm from './ConfigForm';
 
 const App = () => {
   
@@ -38,6 +39,28 @@ const App = () => {
             <Card.Body>
               <ProjectTypeahead />
             </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          <Card className="mb-4">
+            <Tab.Container defaultActiveKey="configure">
+              <Card.Header>
+                <Nav variant="tabs" className="nav-overflow">
+                  <Nav.Item>
+                    <Nav.Link eventKey="configure">Configure</Nav.Link>
+                  </Nav.Item>
+                </Nav>
+              </Card.Header>
+              <Card.Body>
+                <Tab.Content>
+                  <Tab.Pane eventKey="configure">
+                    <ConfigForm />
+                  </Tab.Pane>
+                </Tab.Content>
+              </Card.Body>
+            </Tab.Container>
           </Card>
         </Col>
       </Row>
