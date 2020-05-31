@@ -3,6 +3,7 @@ import { Alert, Card, Col, Container, Row } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { alertsSelector, deleteAlert } from '../slices/alerts';
+import ProjectTypeahead from './ProjectTypeahead';
 
 const App = () => {
   
@@ -35,6 +36,7 @@ const App = () => {
         <Col>
           <Card className="mb-4">
             <Card.Body>
+              <ProjectTypeahead />
             </Card.Body>
           </Card>
         </Col>
