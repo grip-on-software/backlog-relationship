@@ -15,29 +15,44 @@ export interface Release {
 }
 
 interface State {
+  pastSprints: number,
   project: Project | null,
   projects: Project[],
+  showUnestimatedIssues: boolean,
+  unestimatedSize: number,
 }
 
 const initialState: State = {
+  pastSprints: 5,
   project: null,
   projects: [],
+  showUnestimatedIssues: true,
+  unestimatedSize: 1,
 };
 
 const configSlice = createSlice({
   name: "config",
   initialState,
   reducers: {
+    setPastSprints: (state: State, { payload }: { payload: number }) => {
+      state.pastSprints = payload
+    },
     setProject: (state: State, { payload }: { payload: Project | null }) => {
       state.project = payload
     },
     setProjects: (state: State, { payload }: { payload: Project[] }) => {
       state.projects = payload
     },
+    setUnestimatedSize: (state: State, { payload }: { payload: number }) => {
+      state.unestimatedSize = payload
+    },
+    toggleUnestimatedIssues: (state: State) => {
+      state.showUnestimatedIssues = !state.showUnestimatedIssues
+    },
   },
 });
 
-export const { setProject, setProjects } = configSlice.actions;
+export const { setPastSprints, setProject, setProjects, setUnestimatedSize, toggleUnestimatedIssues } = configSlice.actions;
 export const configSelector = (state: any) => state.config as State;
 export default configSlice.reducer;
 
