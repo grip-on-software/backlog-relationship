@@ -1,7 +1,8 @@
 import React, { Fragment, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { Project, configSelector, fetchProjects, setProject } from '../slices/config'; 
+import { configSelector, setProject } from '../slices/config'; 
+import { Project, dataSelector, fetchProjects } from '../slices/data'; 
 
 import { Form } from 'react-bootstrap';
 import { Highlighter, Typeahead, TypeaheadMenuProps, TypeaheadResult } from 'react-bootstrap-typeahead';
@@ -12,7 +13,8 @@ interface Props {
 
 const ProjectTypeahead = (props: Props) => {
   const dispatch = useDispatch();
-  const { project, projects } = useSelector(configSelector);
+  const { project } = useSelector(configSelector);
+  const { projects } = useSelector(dataSelector);
 
   useEffect(() => {
     dispatch(fetchProjects());
