@@ -18,6 +18,8 @@ const ProjectTypeahead = (props: Props) => {
     dispatch(fetchProjects());
   }, [dispatch]);
 
+  const handleChange = (selected: Project[]) => selected.length ? dispatch(setProject(selected[0])) : null;
+
   const renderMenuItem = (project: TypeaheadResult<Project>, props: TypeaheadMenuProps<Project>, idx: number) => {
     return(
       <Fragment>
@@ -38,14 +40,14 @@ const ProjectTypeahead = (props: Props) => {
             id="project"
             labelKey="key"
             options={projects}
-            onChange={selected => selected.length ? dispatch(setProject(selected[0])) : null}
+            onChange={handleChange}
             placeholder="Find a project..."
             renderMenuItemChildren={renderMenuItem} />
         </Form.Group>
+        <h6 className="text-muted card-subtitle mb-2">
+          {project ? project.label : "No project selected"}
+        </h6>
       </Form>
-      <h6 className="text-muted card-subtitle mb-2">
-        {project ? project.label : "No project selected"}
-      </h6>
     </div>
   );
 };
