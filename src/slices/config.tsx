@@ -2,11 +2,9 @@ import { Dispatch, createSlice } from '@reduxjs/toolkit';
 import { addAlert } from './alerts';
 
 export interface Project {
-  isCore: boolean,
-  isRecent: boolean,
+  id: number,
   key: string,
   label: string,
-  releases: Release[],
 };
 
 export interface Release {
@@ -40,8 +38,12 @@ const configSlice = createSlice({
     setProject: (state: State, { payload }: { payload: Project | null }) => {
       state.project = payload
     },
-    setProjects: (state: State, { payload }: { payload: Project[] }) => {
-      state.projects = payload
+    setProjects: (state: State, { payload }: { payload: any[] }) => {
+      state.projects = payload.map(project => ({
+        id: parseInt(project["id"]),
+        key: project["key"],
+        label: project["name"],
+      }) as Project);
     },
     setUnestimatedSize: (state: State, { payload }: { payload: number }) => {
       state.unestimatedSize = payload
@@ -59,8 +61,8 @@ export default configSlice.reducer;
 export const fetchProjects = () => {
   return async (dispatch: Dispatch) => {
     try {
-      const response = await fetch("data/projects.json");
-      const data: Project[] = await response.json();
+      const response = await fetch("data/project.json");
+      const data: any[] = await response.json();
       dispatch(setProjects(data));
     } catch (error) {
       console.error(error);
