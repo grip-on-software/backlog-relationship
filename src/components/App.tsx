@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { alertsSelector, deleteAlert } from '../slices/alerts';
 import BoardTypeahead from './BoardTypeahead';
+import BubbleChart from './BubbleChart';
 import ConfigForm from './ConfigForm';
 
 const App = () => {
@@ -38,6 +39,7 @@ const App = () => {
           <Card className="mb-4">
             <Card.Body>
               <BoardTypeahead />
+              <BubbleChart height={512} />
             </Card.Body>
           </Card>
         </Col>
