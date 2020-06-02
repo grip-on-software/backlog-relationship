@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Collapse, Figure } from "react-bootstrap";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { configSelector } from "../slices/config";
+import { fetchSprints } from "../slices/data";
 
 interface Props {
   className?: string,
@@ -17,6 +18,7 @@ interface Props {
 
 const BubbleChart = (props: Props) => {
 
+  const dispatch = useDispatch();
   const { board } = useSelector(configSelector);
 
   // Maintain references to container and main SVG element.
@@ -36,6 +38,12 @@ const BubbleChart = (props: Props) => {
     setWidth(container.current!.offsetWidth);
     window.addEventListener("resize", handleResize);
   }, [handleResize]);
+
+  // Fetch sprints after board has changed.
+  useEffect(() => {
+    if (!board) return;
+    dispatch(fetchSprints(board.id));
+  }, [board, dispatch]);
 
   return (
     <Collapse in={!!board}>

@@ -6,9 +6,23 @@ export interface Board {
   label: string,
 };
 
+interface Sprint {
+  id: number,
+  label: string,
+  startDate: number,
+  endDate: number,
+  completeDate: number,
+}
+
 interface State {
   boards: Board[],
+  sprints: Sprint[],
 }
+
+const initialState: State = {
+  boards: [],
+  sprints: [],
+};
 
 const jira = new JiraApi({
   protocol: "http",
@@ -21,10 +35,6 @@ const jira = new JiraApi({
   strictSSL: true,
 });
 
-const initialState: State = {
-  boards: [],
-};
-
 const dataSlice = createSlice({
   name: "data",
   initialState,
@@ -32,10 +42,13 @@ const dataSlice = createSlice({
     addBoards: (state: State, { payload }: { payload: Board[] }) => {
       state.boards = state.boards.concat(payload);
     },
+    addSprints: (state: State, { payload }: { payload: Sprint[] }) => {
+      state.sprints = state.sprints.concat(payload);
+    },
   },
 });
 
-export const { addBoards } = dataSlice.actions;
+export const { addBoards, addSprints } = dataSlice.actions;
 export const dataSelector = (state: any) => state.data as State;
 export default dataSlice.reducer;
 
@@ -49,6 +62,26 @@ export const fetchBoards = (startAt = 0, maxResults = 50) => {
         }));
         dispatch(addBoards(boards));
         if (!response.isLast) fetchBoards(startAt+1);
+      })
+      .catch((error: Error) => {
+        console.error(error);
+      });
+  };
+}
+
+export const fetchSprints = (boardId: number, startAt = 0, maxResults = 50) => {
+  return async (dispatch: Dispatch) => {
+    jira.getAllSprints(boardId.toString(), startAt*maxResults, (startAt+1)*maxResults)
+      .then((response: any) => {
+        const sprints = response.values.map((sprint: any) => ({
+          id: sprint.id,
+          label: sprint.name,
+          startDate: Date.parse(sprint.startDate),
+          endDate: Date.parse(sprint.endDate),
+          completeDate: Date.parse(sprint.completeDate),
+        }));
+        dispatch(addSprints(sprints));
+        if (!response.isLast) fetchSprints(startAt+1);
       })
       .catch((error: Error) => {
         console.error(error);
