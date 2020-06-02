@@ -1,9 +1,6 @@
 import { Dispatch, createSlice } from '@reduxjs/toolkit';
 import JiraApi from "jira-client";
 
-import { addAlert } from './alerts';
-import { type } from 'os';
-
 export interface Board {
   id: number,
   label: string,
@@ -50,7 +47,6 @@ export const fetchBoards = (startAt = 0, maxResults = 50) => {
           id: board.id,
           label: board.name,
         }));
-        console.log(boards);
         dispatch(addBoards(boards));
         if (!response.isLast) fetchBoards(startAt+1);
       })
