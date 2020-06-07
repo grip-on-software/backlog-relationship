@@ -6,13 +6,13 @@ import { Alert, Button, Card, Col, Figure, Form, Modal, Row, Spinner } from 'rea
 import { useDispatch, useSelector } from "react-redux";
 
 import { authSelector, autoLogin, login, LoginStatus } from "../slices/auth";
-import { dataSelector, getCurrentUser } from "../slices/data";
+import { getCurrentUser, userSelector } from "../slices/user";
 
 const JiraLogin = () => {
 
   const dispatch = useDispatch();
   const { autoLoginFailed, loginFailed, loginStatus } = useSelector(authSelector);
-  const { user } = useSelector(dataSelector);
+  const { avatarURL, displayName, emailAddress, username } = useSelector(userSelector);
 
   const [usernameInput, passwordInput] = [useRef(null), useRef(null)];
   const [show, setShow] = useState(false);
@@ -67,23 +67,23 @@ const JiraLogin = () => {
               LoginStatus.LoggedIn === loginStatus
               ? <Card
                   bg="light">
-                  <Card.Header>Authenticated as <code>{user?.username || spinner}</code></Card.Header>
+                  <Card.Header>Authenticated as <code>{username || spinner}</code></Card.Header>
                   <Card.Body>
                     <Row>
                       <Col xs="auto" className="pr-1">
                         <Figure>
                           <Figure.Image
                             height={48}
-                            src={user?.avatarURL || "http://jira.example/jira/secure/useravatar?avatarId=10122"}
+                            src={avatarURL || "http://jira.example/jira/secure/useravatar?avatarId=10122"}
                             width={48} />
                         </Figure>
                       </Col>
                       <Col>
                         <Card.Title>
-                          {user?.displayName || spinner}
+                          {displayName || spinner}
                         </Card.Title>
                         <Card.Subtitle className="text-muted">
-                          {user?.emailAddress || spinner}
+                          {emailAddress || spinner}
                         </Card.Subtitle>
                       </Col>
                     </Row>

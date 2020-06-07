@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-import { Board } from './data';
+import { Board } from './boards';
 
 interface State {
   board: Board | null,
