@@ -13,21 +13,9 @@ interface State {
   loginStatus: LoginStatus,
 }
 
-const initialState: State = {
-  autoLoginFailed: false,
-  loginFailed: false,
-  loginStatus: LoginStatus.LoggedOut,
-};
-
 export const autoLogin = createAsyncThunk(
   "auth/autoLogin",
   async () => {
-    const jira = new JiraClient({
-      host: "192.168.178.186",
-      protocol: "http",
-      port: 3000,
-      path_prefix: "jira/",
-    });
     return await jira.auth.currentUser();
   }
 );
@@ -35,10 +23,10 @@ export const autoLogin = createAsyncThunk(
 export const login = createAsyncThunk(
   "auth/login",
   async (credentials: {username: string, password: string}) => {
-    const jira = new JiraClient({
-      host: "192.168.178.186",
-      protocol: "http",
-      port: 3000,
+    jira = new JiraClient({
+      host: window.location.hostname,
+      protocol: window.location.protocol.replace(":", ""),
+      port: parseInt(window.location.port),
       path_prefix: "jira/",
       basic_auth: {
         username: credentials.username,
@@ -48,6 +36,19 @@ export const login = createAsyncThunk(
     return await jira.myself.getMyself();
   }
 );
+
+export let jira = new JiraClient({
+  host: window.location.hostname,
+  protocol: window.location.protocol.replace(":", ""),
+  port: parseInt(window.location.port),
+  path_prefix: "jira/",
+});
+
+const initialState: State = {
+  autoLoginFailed: false,
+  loginFailed: false,
+  loginStatus: LoginStatus.LoggedOut,
+};
 
 const authSlice = createSlice({
   name: "auth",

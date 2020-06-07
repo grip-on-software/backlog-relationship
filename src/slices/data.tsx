@@ -1,5 +1,5 @@
 import { Dispatch, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import JiraClient from "jira-connector";
+import { jira } from './auth';
 
 export interface Board {
   id: number,
@@ -39,12 +39,6 @@ interface User {
 export const getCurrentUser = createAsyncThunk(
   "data/getCurrentUser",
   async () => {
-    const jira = new JiraClient({
-      host: "192.168.178.186",
-      protocol: "http",
-      port: 3000,
-      path_prefix: "jira/",
-    });
     return await jira.myself.getMyself();
   }
 );
@@ -54,13 +48,6 @@ const initialState: State = {
   issues: [],
   sprints: [],
 };
-
-const jira = new JiraClient({
-  host: "192.168.178.186",
-  protocol: "http",
-  port: 3000,
-  path_prefix: "jira/",
-});
 
 const dataSlice = createSlice({
   name: "data",
