@@ -1,24 +1,26 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import JiraClient from "jira-connector";
 
+export enum LoginStatus {
+  LoggedIn,
+  LoggedOut,
+  Pending,
+}
+
 interface State {
-  avatarURL?: string,
-  displayName?: string,
-  email?: string,
-  isLoggedIn: boolean,
+  autoLoginFailed: boolean,
   loginFailed: boolean,
-  loginPending: boolean,
-  username?: string,
+  loginStatus: LoginStatus,
 }
 
 const initialState: State = {
-  isLoggedIn: false,
+  autoLoginFailed: false,
   loginFailed: false,
-  loginPending: false,
+  loginStatus: LoginStatus.LoggedOut,
 };
 
-export const getCurrentUser = createAsyncThunk(
-  "auth/getCurrentUser",
+export const autoLogin = createAsyncThunk(
+  "auth/autoLogin",
   async () => {
     const jira = new JiraClient({
       host: "192.168.178.186",
@@ -27,19 +29,6 @@ export const getCurrentUser = createAsyncThunk(
       path_prefix: "jira/",
     });
     return await jira.auth.currentUser();
-  }
-);
-
-export const getMyself = createAsyncThunk(
-  "auth/getMyself",
-  async () => {
-    const jira = new JiraClient({
-      host: "192.168.178.186",
-      protocol: "http",
-      port: 3000,
-      path_prefix: "jira/",
-    });
-    return await jira.myself.getMyself();
   }
 );
 
@@ -67,39 +56,43 @@ const authSlice = createSlice({
   },
   extraReducers: builder => {
     builder.addCase(
-      getCurrentUser.fulfilled,
-      (state: State, { payload }: any) => {
-        state.isLoggedIn = true;
+      autoLogin.pending,
+      (state: State) => {
+        state.loginStatus = LoginStatus.Pending;
+      }
+    );
+    builder.addCase(
+      autoLogin.rejected,
+      (state: State) => {
+        state.autoLoginFailed = true;
+        state.loginStatus = LoginStatus.LoggedOut;
+      }
+    );
+    builder.addCase(
+      autoLogin.fulfilled,
+      (state: State) => {
+        state.autoLoginFailed = false;
+        state.loginStatus = LoginStatus.LoggedIn;
       }
     );
     builder.addCase(
       login.pending,
       (state: State) => {
-        state.loginPending = true;
+        state.loginStatus = LoginStatus.Pending;
       }
     );
     builder.addCase(
       login.rejected,
       (state: State) => {
         state.loginFailed = true;
-        state.loginPending = false;
+        state.loginStatus = LoginStatus.LoggedOut;
       }
     );
     builder.addCase(
       login.fulfilled,
-      (state: State, { payload }: any) => {
-        state.isLoggedIn = true;
+      (state: State) => {
         state.loginFailed = false;
-        state.loginPending = false;
-        state.username = payload.name;
-      }
-    );
-    builder.addCase(
-      getMyself.fulfilled,
-      (state: State, { payload }: any) => {
-        state.avatarURL = payload.avatarUrls["48x48"];
-        state.displayName = payload.displayName;
-        state.email = payload.emailAddress;
+        state.loginStatus = LoginStatus.LoggedIn;
       }
     );
   }

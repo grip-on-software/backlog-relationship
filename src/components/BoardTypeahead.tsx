@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { setBoard } from '../slices/config'; 
 import { Board, dataSelector, fetchBoards } from '../slices/data'; 
-import { authSelector } from '../slices/auth';
+import { LoginStatus, authSelector } from '../slices/auth';
 
 interface Props {
   className?: string,
@@ -15,13 +15,13 @@ const BoardTypeahead = (props: Props) => {
 
   const dispatch = useDispatch();
 
-  const { isLoggedIn } = useSelector(authSelector);
+  const { loginStatus } = useSelector(authSelector);
   const { boards } = useSelector(dataSelector);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (LoginStatus.LoggedIn !== loginStatus) return;
     dispatch(fetchBoards());
-  }, [dispatch, isLoggedIn]);
+  }, [dispatch, loginStatus]);
 
   const handleChange = (selected: Board[]) => selected.length ? dispatch(setBoard(selected[0])) : null;
 

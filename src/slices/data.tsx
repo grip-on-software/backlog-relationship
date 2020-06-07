@@ -1,4 +1,4 @@
-import { Dispatch, createSlice } from '@reduxjs/toolkit';
+import { Dispatch, createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import JiraClient from "jira-connector";
 
 export interface Board {
@@ -12,7 +12,7 @@ interface Issue {
   created: number,
   issueTypeId: number,
   summary: string,
-}
+};
 
 interface Sprint {
   id: number,
@@ -20,13 +20,34 @@ interface Sprint {
   startDate: number,
   endDate: number,
   completeDate: number,
-}
+};
 
 interface State {
   boards: Board[],
   issues: Issue[],
   sprints: Sprint[],
-}
+  user?: User,
+};
+
+interface User {
+  avatarURL: string,
+  displayName: string,
+  emailAddress: string,
+  username: string,
+};
+
+export const getCurrentUser = createAsyncThunk(
+  "data/getCurrentUser",
+  async () => {
+    const jira = new JiraClient({
+      host: "192.168.178.186",
+      protocol: "http",
+      port: 3000,
+      path_prefix: "jira/",
+    });
+    return await jira.myself.getMyself();
+  }
+);
 
 const initialState: State = {
   boards: [],
@@ -54,6 +75,19 @@ const dataSlice = createSlice({
     addSprints: (state: State, { payload }: { payload: Sprint[] }) => {
       state.sprints = state.sprints.concat(payload);
     },
+  },
+  extraReducers: builder => {
+    builder.addCase(
+      getCurrentUser.fulfilled,
+      (state: State, { payload }: any) => {
+        state.user = {
+          avatarURL: payload.avatarUrls["48x48"],
+          displayName: payload.displayName,
+          emailAddress: payload.emailAddress,
+          username: payload.name,
+        } as User;
+      }
+    );
   },
 });
 
