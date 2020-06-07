@@ -45,13 +45,14 @@ const ConfigForm = () => {
 
   return(
     <Form>
-      <Form.Group controlId="pastSprints">
+      <Form.Group>
         <Form.Label>Number of past sprints to show</Form.Label>
         <Row>
           <Col className="d-flex align-items-center pr-0" xs="3" sm="2" lg="1">
             <Form.Control
               defaultValue={pastSprints}
               disabled={!sprints.length}
+              id="pastSprintsNumber"
               min={sprints.length ? 1 : 0}
               onChange={handlePastSprintChange}
               onMouseUp={handlePastSprintMouseUp}
@@ -65,6 +66,7 @@ const ConfigForm = () => {
               custom
               defaultValue={pastSprints}
               disabled={!sprints.length}
+              id="pastSprintsRange"
               min={sprints.length ? 1 : 0}
               onChange={handlePastSprintChange}
               onMouseUp={handlePastSprintMouseUp}

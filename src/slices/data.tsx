@@ -1,10 +1,18 @@
 import { Dispatch, createSlice } from '@reduxjs/toolkit';
-import JiraApi from "jira-client";
+import JiraClient from "jira-connector";
 
 export interface Board {
   id: number,
   label: string,
 };
+
+interface Issue {
+  id: number,
+  key: string,
+  created: number,
+  issueTypeId: number,
+  summary: string,
+}
 
 interface Sprint {
   id: number,
@@ -16,23 +24,21 @@ interface Sprint {
 
 interface State {
   boards: Board[],
+  issues: Issue[],
   sprints: Sprint[],
 }
 
 const initialState: State = {
   boards: [],
+  issues: [],
   sprints: [],
 };
 
-const jira = new JiraApi({
-  protocol: "http",
+const jira = new JiraClient({
   host: "192.168.178.186",
-  port: "3001",
-  username: process.env.REACT_APP_JIRA_USERNAME,
-  password: process.env.REACT_APP_JIRA_PASSWORD,
-  apiVersion: "1",
-  base: "jira",
-  strictSSL: true,
+  protocol: "http",
+  port: 3000,
+  path_prefix: "jira/",
 });
 
 const dataSlice = createSlice({
@@ -42,49 +48,112 @@ const dataSlice = createSlice({
     addBoards: (state: State, { payload }: { payload: Board[] }) => {
       state.boards = state.boards.concat(payload);
     },
+    addIssues: (state: State, { payload }: { payload: Issue[] }) => {
+      state.issues = state.issues.concat(payload);
+    },
     addSprints: (state: State, { payload }: { payload: Sprint[] }) => {
       state.sprints = state.sprints.concat(payload);
     },
   },
 });
 
-export const { addBoards, addSprints } = dataSlice.actions;
+export const { addBoards, addIssues, addSprints } = dataSlice.actions;
 export const dataSelector = (state: any) => state.data as State;
 export default dataSlice.reducer;
 
-export const fetchBoards = (startAt = 0, maxResults = 50) => {
+export const fetchBoards = () => {
   return async (dispatch: Dispatch) => {
-    jira.getAllBoards(startAt*maxResults, (startAt+1)*maxResults, "scrum")
-      .then((response: any) => {
-        const boards = response.values.map((board: any) => ({
-          id: board.id,
-          label: board.name,
-        }));
-        dispatch(addBoards(boards));
-        if (!response.isLast) fetchBoards(startAt+1);
+    const getAllBoards = async (startAt?: number, maxResults?: number) =>
+      await jira.board.getAllBoards({
+        maxResults: maxResults,
+        startAt: startAt,
+        type: "scrum",
       })
-      .catch((error: Error) => {
-        console.error(error);
-      });
-  };
+      .then(
+        (response: any) => {
+          dispatch(addBoards(response.values.map(
+            (board: any) => ({
+                id: board.id,
+                label: board.name,
+              })
+          )));
+          if (!response.isLast) {
+            getAllBoards(response.startAt + response.maxResults, response.maxResults)
+          }
+        }
+      )
+      .catch(
+        (error: Error) => {
+          console.error(error);
+        }
+      );
+    getAllBoards();
+  }
 }
 
-export const fetchSprints = (boardId: number, startAt = 0, maxResults = 50) => {
+export const fetchIssues = (boardId: number) => {
   return async (dispatch: Dispatch) => {
-    jira.getAllSprints(boardId.toString(), startAt*maxResults, (startAt+1)*maxResults)
-      .then((response: any) => {
-        const sprints = response.values.map((sprint: any) => ({
-          id: sprint.id,
-          label: sprint.name,
-          startDate: Date.parse(sprint.startDate),
-          endDate: Date.parse(sprint.endDate),
-          completeDate: Date.parse(sprint.completeDate),
-        }));
-        dispatch(addSprints(sprints));
-        if (!response.isLast) fetchSprints(startAt+1);
+    const getIssuesForBoard = async (boardId: number, startAt?: number, maxResults?: number) =>
+      await jira.board.getIssuesForBoard({
+        boardId: boardId,
+        fields: ["issuetype", "summary"],
+        maxResults: maxResults,
+        startAt: startAt,
       })
-      .catch((error: Error) => {
-        console.error(error);
-      });
-  };
+      .then(
+        (response: any) => {
+          dispatch(addIssues(response.issues.map(
+            (issue: any) => ({
+                id: parseInt(issue.id),
+                key: issue.key,
+                created: Date.parse(issue.fields.created),
+                issueTypeId: parseInt(issue.fields.issuetype.id),
+                summary: issue.summary
+              })
+          )));
+          if (response.total > response.startAt + response.maxResults) {
+            getIssuesForBoard(boardId, response.startAt + response.maxResults, response.maxResults)
+          }
+        }
+      )
+      .catch(
+        (error: Error) => {
+          console.error(error);
+        }
+      );
+    getIssuesForBoard(boardId);
+  }
+}
+
+export const fetchSprints = (boardId: number) => {
+  return async (dispatch: Dispatch) => {
+    const getAllSprints = async (boardId: number, startAt?: number, maxResults?: number) =>
+      await jira.board.getAllSprints({
+        boardId: boardId,
+        maxResults: maxResults,
+        startAt: startAt,
+      })
+      .then(
+        (response: any) => {
+          dispatch(addSprints(response.values.map(
+            (sprint: any) => ({
+                id: sprint.id,
+                label: sprint.name,
+                startDate: Date.parse(sprint.startDate),
+                endDate: Date.parse(sprint.endDate),
+                completeDate: Date.parse(sprint.completeDate),
+              })
+          )));
+          if (!response.isLast) {
+            getAllSprints(boardId, response.startAt + response.maxResults, response.maxResults)
+          }
+        }
+      )
+      .catch(
+        (error: Error) => {
+          console.error(error);
+        }
+      );
+      getAllSprints(boardId);
+  }
 }

@@ -1,23 +1,27 @@
 import React, { Fragment, useEffect } from 'react';
+import { Form } from 'react-bootstrap';
+import { Highlighter, Typeahead, TypeaheadMenuProps, TypeaheadResult } from 'react-bootstrap-typeahead';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { setBoard } from '../slices/config'; 
 import { Board, dataSelector, fetchBoards } from '../slices/data'; 
-
-import { Form } from 'react-bootstrap';
-import { Highlighter, Typeahead, TypeaheadMenuProps, TypeaheadResult } from 'react-bootstrap-typeahead';
+import { authSelector } from '../slices/auth';
 
 interface Props {
   className?: string,
 };
 
 const BoardTypeahead = (props: Props) => {
+
   const dispatch = useDispatch();
+
+  const { isLoggedIn } = useSelector(authSelector);
   const { boards } = useSelector(dataSelector);
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     dispatch(fetchBoards());
-  }, [dispatch]);
+  }, [dispatch, isLoggedIn]);
 
   const handleChange = (selected: Board[]) => selected.length ? dispatch(setBoard(selected[0])) : null;
 
