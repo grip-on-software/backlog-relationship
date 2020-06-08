@@ -3,9 +3,8 @@ import { Form } from 'react-bootstrap';
 import { Highlighter, Typeahead, TypeaheadMenuProps, TypeaheadResult } from 'react-bootstrap-typeahead';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { store } from '..';
 import { LoginStatus, authSelector } from '../slices/auth';
-import { Board, boardsSelectors, fetchBoards } from '../slices/boards';
+import { Board, fetchBoards, selectAllBoards } from '../slices/boards';
 import { setBoard } from '../slices/config';
 
 interface Props {
@@ -17,7 +16,7 @@ const BoardTypeahead = (props: Props) => {
   const dispatch = useDispatch();
 
   const { loginStatus } = useSelector(authSelector);
-  const allBoards = boardsSelectors.selectAll(store.getState());
+  const allBoards = useSelector(selectAllBoards);
 
   useEffect(() => {
     if (LoginStatus.LoggedIn !== loginStatus) return;

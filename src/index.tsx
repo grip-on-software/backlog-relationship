@@ -11,7 +11,7 @@ import 'react-bootstrap-typeahead/css/Typeahead.scss';
 import 'react-bootstrap-typeahead/css/Typeahead-bs4.scss';
 import 'react-bootstrap-range-slider/dist/react-bootstrap-range-slider.css';
 
-export const store = configureStore({ reducer: rootReducer });
+const store = configureStore({ reducer: rootReducer });
 export type RootState = ReturnType<typeof store.getState>;
 
 ReactDOM.render(

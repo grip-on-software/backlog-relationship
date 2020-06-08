@@ -8,22 +8,42 @@ export interface Board {
   label: string,
 };
 
+interface BoardSchema {
+  id: number,
+  name: string,
+  self: string,
+  type: "kanban" | "scrum"
+}
+
+interface GetAllBoardsSchema {
+  isLast: boolean,
+  maxResults: number,
+  startAt: number,
+  values: BoardSchema[]
+}
+
 export const fetchBoards = createAsyncThunk(
   "boards/fetch",
   async () => {
+    let results: GetAllBoardsSchema[] = [];
+    let startAt = 0, maxResults = 50;
     let isLast = false;
-    let results: Promise<any>[] = [];
-    let startAt = 0;
     while (!isLast) {
-      const response = await jira.board.getAllBoards({
-        startAt: startAt,
-        type: "scrum",
-      });
-      isLast = response.isLast;
-      startAt += response.maxResults;
-      results.push(response)
+      try {
+        const response: GetAllBoardsSchema = await jira.board.getAllBoards({
+          startAt: startAt,
+          type: "scrum",
+        });
+        maxResults = response.maxResults;
+        isLast = response.isLast;
+        results.push(response);
+      } catch (error) {
+        throw error;
+      } finally {
+        startAt += maxResults;
+      }
     }
-    return Promise.all(results);
+    return results;
   }
 );
 
@@ -32,21 +52,28 @@ const boardsAdapter = createEntityAdapter<Board>();
 const boardsSlice = createSlice({
   name: "boards",
   initialState: boardsAdapter.getInitialState(),
-  reducers: {
-
-  },
+  reducers: {},
   extraReducers: builder => {
     builder.addCase(
       fetchBoards.fulfilled,
-      (state: EntityState<Board>, action: { payload: Board[] }) => {
-        console.log(action.payload);
+      (state: EntityState<Board>, { payload }: { payload: GetAllBoardsSchema[] }) => {
+        payload.forEach(response => 
+          boardsAdapter.addMany(
+            state,
+            response.values.map(boardSchema => ({
+                id: boardSchema.id,
+                label: boardSchema.name
+              }) as Board
+            )
+          )
+        )
       }
     );
   },
 });
 
-export const boardsSelectors = boardsAdapter.getSelectors<RootState>(
-  state => state.boards
-);
+export const {
+  selectAll: selectAllBoards,
+} = boardsAdapter.getSelectors<RootState>(state => state.boards);
 
 export default boardsSlice.reducer;

@@ -1,6 +1,8 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import JiraClient from "jira-connector";
 
+import { RootState } from '..';
+
 export enum LoginStatus {
   LoggedIn,
   LoggedOut,
@@ -100,5 +102,5 @@ const authSlice = createSlice({
 });
 
 export const {} = authSlice.actions;
-export const authSelector = (state: any) => state.auth as State;
+export const authSelector = (state: RootState) => state.auth as State;
 export default authSlice.reducer;
