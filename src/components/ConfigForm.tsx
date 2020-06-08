@@ -15,20 +15,14 @@ const ConfigForm = () => {
   const pastSprintsRange = useRef(null);
 
   const handlePastSprintChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    (pastSprintsNumber.current as unknown as HTMLInputElement).value = event.target.value;
-    (pastSprintsRange.current as unknown as HTMLInputElement).value = event.target.value;
-  }
-
-  const handlePastSprintMouseUp = (event: React.MouseEvent<HTMLInputElement>) => {
-    const value = parseInt((event.target as HTMLInputElement).value);
-    if (isNaN(value)) return;
+    const value = parseFloat(event.target.value);
+    if (isNaN(value) || 0 > value) return;
     dispatch(setPastSprints(value));
   }
 
   const handleUnestimatedSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(event.target.value);
-    if (isNaN(value)) return;
-    if (value < 0) return;
+    if (isNaN(value) || 0 > value) return;
     dispatch(setUnestimatedSize(value));
   }
 
@@ -55,7 +49,6 @@ const ConfigForm = () => {
               id="pastSprintsNumber"
               min={sprints.length ? 1 : 0}
               onChange={handlePastSprintChange}
-              onMouseUp={handlePastSprintMouseUp}
               ref={pastSprintsNumber}
               size="sm"
               step={1}
@@ -69,7 +62,6 @@ const ConfigForm = () => {
               id="pastSprintsRange"
               min={sprints.length ? 1 : 0}
               onChange={handlePastSprintChange}
-              onMouseUp={handlePastSprintMouseUp}
               ref={pastSprintsRange}
               step={1}
               type="range" />
