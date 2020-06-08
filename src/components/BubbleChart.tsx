@@ -21,7 +21,7 @@ interface Props {
 const BubbleChart = (props: Props) => {
 
   const dispatch = useDispatch();
-  const { board, pastSprints } = useSelector(configSelector);
+  const { boardId, pastSprints } = useSelector(configSelector);
   const allSprints = useSelector(selectAllSprints);
 
   // Maintain references to container and main SVG element.
@@ -44,15 +44,15 @@ const BubbleChart = (props: Props) => {
 
   // Fetch sprints after board has changed.
   useEffect(() => {
-    if (!board) return;
-    dispatch(fetchSprints({boardId: board.id}));
-  }, [board, dispatch]);
+    if (!boardId) return;
+    dispatch(fetchSprints({boardId: boardId}));
+  }, [boardId, dispatch]);
 
   // Fetch issues after board has changed.
   useEffect(() => {
-    if (!board) return;
-    dispatch(fetchIssues({boardId: board.id}));
-  }, [board, dispatch]);
+    if (!boardId) return;
+    dispatch(fetchIssues({boardId: boardId}));
+  }, [boardId, dispatch]);
 
   const sprintNodes = useMemo(() => {
     return allSprints.slice(-pastSprints)

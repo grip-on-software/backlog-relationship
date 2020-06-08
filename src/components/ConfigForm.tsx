@@ -8,7 +8,7 @@ import { selectAllSprints } from '../slices/sprints';
 const ConfigForm = () => {
 
   const dispatch = useDispatch();
-  const { board, pastSprints, showUnestimatedIssues, unestimatedSize } = useSelector(configSelector);
+  const { boardId, pastSprints, showUnestimatedIssues, unestimatedSize } = useSelector(configSelector);
   const sprints = useSelector(selectAllSprints);
 
   const pastSprintsNumber = useRef(null);
@@ -72,7 +72,7 @@ const ConfigForm = () => {
         <Form.Label>Unestimated issues</Form.Label>
         <Form.Check
           defaultChecked={showUnestimatedIssues}
-          disabled={!board}
+          disabled={!boardId}
           id="showUnestimatedIssues"
           label="Show unestimated issues"
           onClick={() => dispatch(toggleUnestimatedIssues())}
@@ -85,7 +85,7 @@ const ConfigForm = () => {
               <Form.Label>Number of story points</Form.Label>
               <Form.Control
                 defaultValue={unestimatedSize}
-                disabled={!board}
+                disabled={!boardId}
                 min={0}
                 onChange={handleUnestimatedSizeChange}
                 type="number" />

@@ -23,9 +23,9 @@ const BoardTypeahead = (props: Props) => {
     dispatch(fetchBoards());
   }, [dispatch, loginStatus]);
 
-  const handleChange = (selected: Board[]) => selected.length ? dispatch(setBoard(selected[0])) : null;
+  const handleChange = (selected: Board[]) => selected.length ? dispatch(setBoard(selected[0].id)) : null;
 
-  const renderMenuItem = (board: TypeaheadResult<Board>, props: TypeaheadMenuProps<Board>, idx: number) => {
+  const renderMenuItem = (board: TypeaheadResult<Board>, props: TypeaheadMenuProps<Board>) => {
     return(
       <Fragment>
         <Highlighter key={board.label} search={props.text}>{board.label}</Highlighter>
