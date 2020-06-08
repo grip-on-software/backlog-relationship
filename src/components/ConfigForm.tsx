@@ -3,13 +3,13 @@ import { Card, Col, Form, Row, Collapse } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { configSelector, toggleUnestimatedIssues, setPastSprints, setUnestimatedSize } from '../slices/config';
-import { dataSelector } from '../slices/data';
+import { selectAllSprints } from '../slices/sprints';
 
 const ConfigForm = () => {
 
   const dispatch = useDispatch();
   const { board, pastSprints, showUnestimatedIssues, unestimatedSize } = useSelector(configSelector);
-  const { sprints } = useSelector(dataSelector);
+  const sprints = useSelector(selectAllSprints);
 
   const pastSprintsNumber = useRef(null);
   const pastSprintsRange = useRef(null);

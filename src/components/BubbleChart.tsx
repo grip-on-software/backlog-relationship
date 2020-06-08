@@ -4,7 +4,8 @@ import { Figure } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 
 import { configSelector } from "../slices/config";
-import { dataSelector, fetchIssues, fetchSprints } from "../slices/data";
+import { fetchIssues } from "../slices/data";
+import { fetchSprints, selectAllSprints } from "../slices/sprints";
 
 interface Props {
   className?: string,
@@ -21,7 +22,7 @@ const BubbleChart = (props: Props) => {
 
   const dispatch = useDispatch();
   const { board, pastSprints } = useSelector(configSelector);
-  const { sprints } = useSelector(dataSelector);
+  const allSprints = useSelector(selectAllSprints);
 
   // Maintain references to container and main SVG element.
   const container = useRef<(HTMLElement & Figure<"figure">) | null>(null);
@@ -45,13 +46,13 @@ const BubbleChart = (props: Props) => {
   useEffect(() => {
     if (!board) return;
     dispatch(fetchIssues(board.id));
-    dispatch(fetchSprints(board.id));
+    dispatch(fetchSprints({boardId: board.id}));
   }, [board, dispatch]);
 
   const sprintNodes = useMemo(() => {
-    return sprints.slice(-pastSprints)
+    return allSprints.slice(-pastSprints)
       .map(sprint => ({radius: 15}));
-  }, [pastSprints, sprints]);
+  }, [pastSprints, allSprints]);
 
   const ticked = useCallback(() => {
     if (!svg.current) return;

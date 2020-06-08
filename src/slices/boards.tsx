@@ -10,15 +10,16 @@ export interface Board {
 
 interface BoardSchema {
   id: number,
-  name: string,
   self: string,
+  name: string,
   type: "kanban" | "scrum"
 }
 
 interface GetAllBoardsSchema {
-  isLast: boolean,
   maxResults: number,
   startAt: number,
+  total?: number,
+  isLast: boolean,
   values: BoardSchema[]
 }
 

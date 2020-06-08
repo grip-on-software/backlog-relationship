@@ -3,6 +3,13 @@ import { createAsyncThunk, createEntityAdapter, createSlice, EntityState } from 
 import { RootState } from "..";
 import { jira } from "./auth";
 
+interface GetAllSprintsSchema {
+  isLast: boolean,
+  maxResults: number,
+  startAt: number,
+  values: SprintSchema[]
+};
+
 interface Sprint {
   id: number,
   label: string,
@@ -11,10 +18,40 @@ interface Sprint {
   completeDate: number,
 };
 
+interface SprintSchema {
+  id: number,
+  self: string,
+  state: "active" | "future" | "closed",
+  name: string,
+  startDate?: string,
+  endDate?: string,
+  completeDate?: string,
+  originBoardId?: number,
+}
+
 export const fetchSprints = createAsyncThunk(
   "sprints/fetch",
-  async () => {
-    
+  async (args: {boardId: number}) => {
+    let results: GetAllSprintsSchema[] = [];
+    let startAt = 0, maxResults = 50;
+    let isLast = false;
+    while (!isLast) {
+      try {
+        const response: GetAllSprintsSchema = await jira.board.getAllSprints({
+          boardId: args.boardId,
+          maxResults: maxResults,
+          startAt: startAt,
+        });
+        maxResults = response.maxResults;
+        isLast = response.isLast;
+        results.push(response);
+      } catch (error) {
+        throw error;
+      } finally {
+        startAt += maxResults;
+      }
+    }
+    return results;
   }
 );
 
@@ -27,11 +64,29 @@ const sprintsSlice = createSlice({
 
   },
   extraReducers: builder => {
+    builder.addCase(
+      fetchSprints.fulfilled,
+      (state: EntityState<Sprint>, { payload }: { payload: GetAllSprintsSchema[] }) => {
+        payload.forEach(response => 
+          sprintsAdapter.addMany(
+            state,
+            response.values.map(sprintSchema => ({
+                id: sprintSchema.id,
+                label: sprintSchema.name,
+                startDate: sprintSchema.startDate ? Date.parse(sprintSchema.startDate) : undefined,
+                endDate: sprintSchema.endDate ? Date.parse(sprintSchema.endDate) : undefined,
+                completeDate: sprintSchema.completeDate ? Date.parse(sprintSchema.completeDate) : undefined,
+              }) as Sprint
+            )
+          )
+        )
+      }
+    );
   },
 });
 
-export const sprintsSelectors = sprintsAdapter.getSelectors<RootState>(
-  state => state.sprints
-);
+export const {
+  selectAll: selectAllSprints,
+} = sprintsAdapter.getSelectors<RootState>(state => state.sprints);
 
 export default sprintsSlice.reducer;

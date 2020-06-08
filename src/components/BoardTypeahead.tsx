@@ -16,7 +16,7 @@ const BoardTypeahead = (props: Props) => {
   const dispatch = useDispatch();
 
   const { loginStatus } = useSelector(authSelector);
-  const allBoards = useSelector(selectAllBoards);
+  const boards = useSelector(selectAllBoards);
 
   useEffect(() => {
     if (LoginStatus.LoggedIn !== loginStatus) return;
@@ -40,7 +40,7 @@ const BoardTypeahead = (props: Props) => {
           <Typeahead
             bsSize="lg"
             id="board"
-            options={allBoards}
+            options={boards}
             onChange={handleChange}
             placeholder="Find a board..."
             renderMenuItemChildren={renderMenuItem} />
