@@ -4,7 +4,7 @@ import { Figure } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 
 import { configSelector } from "../slices/config";
-import { fetchIssues } from "../slices/data";
+import { fetchIssues } from "../slices/issues";
 import { fetchSprints, selectAllSprints } from "../slices/sprints";
 
 interface Props {
@@ -42,11 +42,16 @@ const BubbleChart = (props: Props) => {
     window.addEventListener("resize", handleResize);
   }, [handleResize]);
 
-  // Fetch issues & sprints after board has changed.
+  // Fetch sprints after board has changed.
   useEffect(() => {
     if (!board) return;
-    dispatch(fetchIssues(board.id));
     dispatch(fetchSprints({boardId: board.id}));
+  }, [board, dispatch]);
+
+  // Fetch issues after board has changed.
+  useEffect(() => {
+    if (!board) return;
+    dispatch(fetchIssues({boardId: board.id}));
   }, [board, dispatch]);
 
   const sprintNodes = useMemo(() => {

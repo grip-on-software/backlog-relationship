@@ -4,7 +4,7 @@ import alertsReducer from "./alerts";
 import authReducer from "./auth";
 import boardsReducer from "./boards";
 import configReducer from "./config";
-import dataReducer from "./data";
+import issuesReducer from "./issues";
 import sprintsReducer from "./sprints";
 import userReducer from "./user";
 
@@ -13,7 +13,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   boards: boardsReducer,
   config: configReducer,
-  data: dataReducer,
+  issues: issuesReducer,
   sprints: sprintsReducer,
   user: userReducer,
 });
