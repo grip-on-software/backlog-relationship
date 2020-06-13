@@ -97,7 +97,7 @@ const JiraLogin = () => {
                       <li>Credentials are not stored.</li>
                     </ul>
                   </Alert>
-                  <Form.Group>
+                  <Form.Group controlId="jiraUsername">
                     <Form.Label>Username</Form.Label>
                     <Form.Control
                       autoCapitalize="off"
@@ -105,7 +105,7 @@ const JiraLogin = () => {
                       ref={usernameInput}
                       type="text" />
                   </Form.Group>
-                  <Form.Group>
+                  <Form.Group controlId="jiraPassword">
                     <Form.Label>Password</Form.Label>
                     <Form.Control
                       disabled={LoginStatus.Pending === loginStatus}
