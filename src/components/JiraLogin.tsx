@@ -14,7 +14,7 @@ const JiraLogin = () => {
   const { autoLoginFailed, loginFailed, loginStatus } = useSelector(authSelector);
   const { avatarURL, displayName, emailAddress, username } = useSelector(userSelector);
 
-  const [usernameInput, passwordInput] = [useRef(null), useRef(null)];
+  const [usernameInput, passwordInput] = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
   const [show, setShow] = useState(false);
 
   const spinner = <Spinner animation="border" role="status" size="sm" />;
@@ -103,6 +103,7 @@ const JiraLogin = () => {
                       autoCapitalize="off"
                       disabled={LoginStatus.Pending === loginStatus}
                       ref={usernameInput}
+                      required
                       type="text" />
                   </Form.Group>
                   <Form.Group controlId="jiraPassword">
@@ -111,6 +112,7 @@ const JiraLogin = () => {
                       disabled={LoginStatus.Pending === loginStatus}
                       isInvalid={loginFailed}
                       ref={passwordInput}
+                      required
                       type="password" />
                     <Form.Control.Feedback type="invalid">
                       The password you entered is incorrect.
@@ -130,8 +132,8 @@ const JiraLogin = () => {
                   variant="primary">
                   {
                     LoginStatus.Pending === loginStatus
-                    ? "Logging In..."
-                    : "Log In"
+                    ? "Authenticating..."
+                    : "Authenticate"
                   }
                   <Spinner
                     animation="border"
