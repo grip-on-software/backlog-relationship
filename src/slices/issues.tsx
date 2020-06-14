@@ -1,6 +1,7 @@
 import { createAsyncThunk, createEntityAdapter, createSlice, EntityState } from "@reduxjs/toolkit";
 
 import { jira } from "./auth";
+import { RootState } from "..";
 
 interface GetIssuesForBoardSchema {
   expand: string,
@@ -10,7 +11,7 @@ interface GetIssuesForBoardSchema {
   issues: IssueSchema[]
 };
 
-interface Issue {
+export interface Issue {
   created: number,
   id: number,
   issueTypeId: number,
@@ -19,7 +20,6 @@ interface Issue {
   priorityId: number,
   statusId: number,
   storyPoints?: number
-  subtaskIds: number[],
   summary: string,
 };
 
@@ -42,28 +42,24 @@ interface IssueSchema {
     status: {
       id: string,
     },
-    subtasks: [{
-      id: string,
-    }],
     summary: string,
   }
 }
 
 export const fetchIssues = createAsyncThunk(
   "issues/fetch",
-  async (args: {boardId: number}, thunkAPI) => {
-    const { dispatch } = thunkAPI;
+  async (args: {boardId: number}) => {
     let results: GetIssuesForBoardSchema[] = [];
     let startAt = 0, maxResults = 50, total = 51;
     while (startAt + maxResults < total) {
       try {
         const response: GetIssuesForBoardSchema = await jira.board.getIssuesForBoard({
           boardId: args.boardId,
-          fields: ["created", "issuetype", "parent", "priority", "status", "subtasks", "summary"],
+          fields: ["created", "issuetype", "parent", "priority", "status", "summary"],
           maxResults: maxResults,
           startAt: startAt,
         });
-        maxResults = 10000;
+        maxResults = response.maxResults;
         total = response.total;
         results.push(response);
       } catch (error) {
@@ -100,7 +96,6 @@ const issuesSlice = createSlice({
                 parentId: issueSchema.fields.parent ? parseInt(issueSchema.fields.parent.id) : undefined,
                 priorityId: parseInt(issueSchema.fields.priority.id),
                 statusId: parseInt(issueSchema.fields.status.id),
-                subtaskIds: issueSchema.fields.subtasks.map(subtask => parseInt(subtask.id)),
                 summary: issueSchema.fields.summary,
               }) as Issue
             )
@@ -110,5 +105,9 @@ const issuesSlice = createSlice({
     );
   },
 });
+
+export const {
+  selectAll: selectAllIssues,
+} = issuesAdapter.getSelectors<RootState>(state => state.issues);
 
 export default issuesSlice.reducer;
