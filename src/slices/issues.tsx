@@ -11,9 +11,16 @@ interface GetIssuesForBoardSchema {
 };
 
 interface Issue {
-  id: number,
-  key: string,
   created: number,
+  id: number,
+  issueTypeId: number,
+  key: string,
+  parentId?: number,
+  priorityId: number,
+  statusId: number,
+  storyPoints?: number
+  subtaskIds: number[],
+  summary: string,
 };
 
 interface IssueSchema {
@@ -23,23 +30,40 @@ interface IssueSchema {
   key: string,
   fields: {
     created: string,
+    issuetype: {
+      id: string,
+    },
+    parent?: {
+      id: string,
+    },
+    priority: {
+      id: string,
+    },
+    status: {
+      id: string,
+    },
+    subtasks: [{
+      id: string,
+    }],
+    summary: string,
   }
 }
 
 export const fetchIssues = createAsyncThunk(
   "issues/fetch",
-  async (args: {boardId: number}) => {
+  async (args: {boardId: number}, thunkAPI) => {
+    const { dispatch } = thunkAPI;
     let results: GetIssuesForBoardSchema[] = [];
     let startAt = 0, maxResults = 50, total = 51;
     while (startAt + maxResults < total) {
       try {
         const response: GetIssuesForBoardSchema = await jira.board.getIssuesForBoard({
           boardId: args.boardId,
-          fields: ["created"],
+          fields: ["created", "issuetype", "parent", "priority", "status", "subtasks", "summary"],
           maxResults: maxResults,
           startAt: startAt,
         });
-        maxResults = response.maxResults;
+        maxResults = 10000;
         total = response.total;
         results.push(response);
       } catch (error) {
@@ -67,10 +91,17 @@ const issuesSlice = createSlice({
         payload.forEach(response => 
           issuesAdapter.addMany(
             state,
-            response.issues.map(issueSchema => ({
-                id: parseInt(issueSchema.id),
-                key: issueSchema.key,
+            response.issues.map(
+              issueSchema => ({
                 created: Date.parse(issueSchema.fields.created),
+                id: parseInt(issueSchema.id),
+                issueTypeId: parseInt(issueSchema.fields.issuetype.id),
+                key: issueSchema.key,
+                parentId: issueSchema.fields.parent ? parseInt(issueSchema.fields.parent.id) : undefined,
+                priorityId: parseInt(issueSchema.fields.priority.id),
+                statusId: parseInt(issueSchema.fields.status.id),
+                subtaskIds: issueSchema.fields.subtasks.map(subtask => parseInt(subtask.id)),
+                summary: issueSchema.fields.summary,
               }) as Issue
             )
           )
