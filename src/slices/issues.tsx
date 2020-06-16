@@ -50,8 +50,8 @@ export const fetchIssues = createAsyncThunk(
   "issues/fetch",
   async (args: {boardId: number}) => {
     let results: GetIssuesForBoardSchema[] = [];
-    let startAt = 0, maxResults = 50, total = 51;
-    while (startAt + maxResults < total) {
+    let startAt = 0, maxResults = 256, total;
+    while (!total || startAt + maxResults < total) {
       try {
         const response: GetIssuesForBoardSchema = await jira.board.getIssuesForBoard({
           boardId: args.boardId,
@@ -59,7 +59,9 @@ export const fetchIssues = createAsyncThunk(
           maxResults: maxResults,
           startAt: startAt,
         });
-        maxResults = response.maxResults;
+        if (response.maxResults < maxResults) {
+          maxResults = response.maxResults;
+        }
         total = response.total;
         results.push(response);
       } catch (error) {
@@ -108,6 +110,7 @@ const issuesSlice = createSlice({
 
 export const {
   selectAll: selectAllIssues,
+  selectEntities: selectIssueEntities,
 } = issuesAdapter.getSelectors<RootState>(state => state.issues);
 
 export default issuesSlice.reducer;

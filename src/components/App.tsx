@@ -41,8 +41,18 @@ const App = () => {
           <Col>
             <Card className="mb-4">
               <Card.Body>
-                <BoardTypeahead />
-                <BubbleChart height={512} />
+                <Container className="p-0" fluid>
+                  <Row>
+                    <Col>
+                      <BoardTypeahead />
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col>
+                      <BubbleChart height={512} />
+                    </Col>
+                  </Row>
+                </Container>
               </Card.Body>
             </Card>
           </Col>

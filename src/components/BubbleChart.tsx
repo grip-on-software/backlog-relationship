@@ -1,11 +1,16 @@
-import { event, forceLink, forceManyBody, forceSimulation, forceX, forceY, select, zoom, SimulationNodeDatum } from "d3";
+import classNames from "classnames";
+import { event, forceLink, forceManyBody, forceSimulation, forceX, forceY, select, zoom } from "d3";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Figure } from "react-bootstrap";
+import { Alert, Col, Collapse, Container, Figure, Row, Spinner } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 
+import { LoginStatus, authSelector } from "../slices/auth";
 import { configSelector } from "../slices/config";
-import { Issue, fetchIssues, selectAllIssues } from "../slices/issues";
+import { fetchIssueTypes, selectIssueTypeEntities } from "../slices/issueTypes";
+import { Issue, fetchIssues, selectAllIssues, selectIssueEntities } from "../slices/issues";
 import { fetchSprints, selectAllSprints } from "../slices/sprints";
+import { fetchStatusCategories } from "../slices/statusCategories";
+import { fetchStatuses, selectStatusEntities } from "../slices/statuses";
 
 interface Link {
   source: number,
@@ -26,9 +31,12 @@ interface Props {
 const BubbleChart = (props: Props) => {
 
   const dispatch = useDispatch();
-  const { boardId, pastSprints } = useSelector(configSelector);
+  const { loginStatus } = useSelector(authSelector);
+  const { boardId, pastSprints, showUnestimatedIssues, unestimatedSize } = useSelector(configSelector);
   const sprints = useSelector(selectAllSprints);
   const issues = useSelector(selectAllIssues);
+  const issueEntities = useSelector(selectIssueEntities);
+  const issueTypeEntities = useSelector(selectIssueTypeEntities);
 
   // Maintain references to container and main SVG element.
   const container = useRef<(HTMLElement & Figure<"figure">)>(null);
@@ -47,6 +55,24 @@ const BubbleChart = (props: Props) => {
     setWidth(container.current!.offsetWidth);
     window.addEventListener("resize", handleResize);
   }, [handleResize]);
+
+  // Fetch issue types on initialization.
+  useEffect(() => {
+    if (LoginStatus.LoggedIn !== loginStatus) return;
+    dispatch(fetchIssueTypes());
+  }, [dispatch, loginStatus]);
+
+  // Fetch status categories on initialization.
+  useEffect(() => {
+    if (LoginStatus.LoggedIn !== loginStatus) return;
+    dispatch(fetchStatusCategories());
+  }, [dispatch, loginStatus]);
+
+  // Fetch statuses on initialization.
+  useEffect(() => {
+    if (LoginStatus.LoggedIn !== loginStatus) return;
+    dispatch(fetchStatuses());
+  }, [dispatch, loginStatus]);
 
   // Fetch sprints after board has changed.
   useEffect(() => {
@@ -75,7 +101,10 @@ const BubbleChart = (props: Props) => {
       .map(link => Object.create(link));
   }, [issues]);
   
-  const nodes = useMemo(() => issues.map(node => Object.create(node)), [issues]);
+  const nodes = useMemo(() => {
+    return issues
+      .map(issue => Object.create({id: issue.id}))
+    }, [issues]);
 
   const simulation = useMemo(() => {
     return forceSimulation(nodes)
@@ -90,7 +119,7 @@ const BubbleChart = (props: Props) => {
     const chart = select(svg.current);
     return chart.select(".links")
       .selectAll("line")
-      .data(links)
+      .data(links, (d: any) => `${d.source.id}-${d.target.id}`)
       .join("line")
         .attr("class", "link");
   }, [links]);
@@ -100,11 +129,20 @@ const BubbleChart = (props: Props) => {
     const chart = select(svg.current);
     return chart.select(".nodes")
       .selectAll("circle")
-      .data(nodes)
+      .data(nodes, (d: any) => d.id)
       .join("circle")
-        .attr("class", d => d.issueTypeId)
-        .attr("r", d => d.statusId);
-  }, [nodes]);
+        .attr("class", d => {
+          let issueTypeId;
+          try {
+            issueTypeId = issueTypeEntities[issueEntities[d.id]!.issueTypeId]!.id;
+          } catch {
+            issueTypeId = 1;
+          } finally {
+            return `issuetype-${issueTypeId}`;
+          }
+        })
+        .attr("r", 5);
+  }, [issueEntities, issueTypeEntities, nodes]);
 
   useEffect(() => {
     if (!link || !node) return;
@@ -136,14 +174,31 @@ const BubbleChart = (props: Props) => {
   }, [props.height, width]);
 
   return (
-    <Figure ref={container} className={`${props.className ? props.className : ""} figure-img d-block`}>
-      <svg className="chart chart-bubbles" ref={svg} height={props.height} width={width} viewBox={`${-width/2} ${-props.height/2} ${width} ${props.height}`}>
-        <g className="root">
-          <g className="links"></g>
-          <g className="nodes"></g>
-        </g>
-      </svg>
-    </Figure>
+    <Container ref={container} className={classNames(props.className, "p-0")} fluid>
+      <Collapse in={!!boardId && !issues.length} unmountOnExit>
+        <Row>
+          <Col>
+            <Alert variant="info">
+              <Spinner animation="border" className="mr-2" size="sm" />Fetching data from JIRA...            
+            </Alert>
+          </Col>
+        </Row>
+      </Collapse>
+      <Collapse in={!!issues.length}>
+        <Row>
+          <Col>
+            <Figure className="figure-img d-block">
+              <svg className="chart chart-bubbles" ref={svg} height={props.height} width={width} viewBox={`${-width/2} ${-props.height/2} ${width} ${props.height}`}>
+                <g className="root">
+                  <g className="links"></g>
+                  <g className="nodes"></g>
+                </g>
+              </svg>
+            </Figure>
+          </Col>
+        </Row>
+      </Collapse>
+    </Container>
   );
 }
 
