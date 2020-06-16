@@ -3,6 +3,30 @@ import { createAsyncThunk, createEntityAdapter, createSlice, EntityState } from 
 import { RootState } from "..";
 import { jira } from "./auth";
 
+export enum IssueTypes {
+  Bug = 1,
+  NewFeature,
+  Task,
+  Improvement,
+  Subtask,
+  Epic,
+  Story,
+  TechnicalTask,
+  LogicalTestCase,
+  PhysicalTestCase,
+  CustomIssue,
+  SprintBug,
+  UseCase = 20,
+  IssueCollectorFinding,
+  SystemFunction,
+  ReleaseAssembly = 10000,
+  Request = 10100,
+  Requirement = 10200,
+  RequestForInformation = 10300,
+  NonFunctionalTestCase,
+  Spike = 10401
+}
+
 export interface IssueType {
   description: string,
   iconURL: string,
@@ -56,6 +80,7 @@ const issueTypesSlice = createSlice({
 });
 
 export const {
+  selectById: selectIssueTypeById,
   selectEntities: selectIssueTypeEntities,
 } = issueTypesAdapter.getSelectors<RootState>(state => state.issueTypes);
 

@@ -110,6 +110,7 @@ const issuesSlice = createSlice({
 
 export const {
   selectAll: selectAllIssues,
+  selectById: selectIssueById,
   selectEntities: selectIssueEntities,
 } = issuesAdapter.getSelectors<RootState>(state => state.issues);
 

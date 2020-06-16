@@ -1,7 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-import { Board } from './boards';
-
 interface State {
   boardId?: number,
   pastSprints: number,

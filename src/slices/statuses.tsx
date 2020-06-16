@@ -3,6 +3,19 @@ import { createAsyncThunk, createEntityAdapter, createSlice, EntityState } from 
 import { RootState } from "..";
 import { jira } from "./auth";
 
+export enum Statuses {
+  Open = 1,
+  InProgress = 3,
+  Reopened,
+  Resolved,
+  Closed,
+  Done = 10008,
+  Backlog = 10107,
+  SelectedForDevelopment,
+  Waiting = 10310,
+  WontDo = 10707
+}
+
 export interface Status {
   description: string,
   iconURL: string,
@@ -58,6 +71,7 @@ const statusesSlice = createSlice({
 });
 
 export const {
+  selectById: selectStatusById,
   selectEntities: selectStatusEntities,
 } = statusesAdapter.getSelectors<RootState>(state => state.statuses);
 

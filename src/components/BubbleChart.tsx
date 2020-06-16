@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { event, forceLink, forceManyBody, forceSimulation, forceX, forceY, select, zoom } from "d3";
+import { event, forceLink, forceManyBody, forceSimulation, forceX, forceY, mouse, select, zoom } from "d3";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Col, Collapse, Container, Figure, Row, Spinner } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,6 +11,7 @@ import { Issue, fetchIssues, selectAllIssues, selectIssueEntities } from "../sli
 import { fetchSprints, selectAllSprints } from "../slices/sprints";
 import { fetchStatusCategories } from "../slices/statusCategories";
 import { fetchStatuses, selectStatusEntities } from "../slices/statuses";
+import InfoPanel from "./InfoPanel";
 
 interface Link {
   source: number,
@@ -55,6 +56,9 @@ const BubbleChart = (props: Props) => {
     setWidth(container.current!.offsetWidth);
     window.addEventListener("resize", handleResize);
   }, [handleResize]);
+
+  // Maintain reference to current issue.
+  const [currentIssueId, setCurrentIssueId] = useState(-1);
 
   // Fetch issue types on initialization.
   useEffect(() => {
@@ -162,16 +166,42 @@ const BubbleChart = (props: Props) => {
     if (!svg.current) return;
     const chart = select(svg.current as Element);
     chart
-      .call(
-        zoom()
-          .extent([[0, 0], [width, props.height]])
-          .scaleExtent([0.5, 5])
-          .on("zoom", () => chart
-            .select(".root")
-            .attr("transform", event.transform))
-      )
-      .on("wheel", () => event.preventDefault());
+        .call(
+          zoom()
+            .extent([[0, 0], [width, props.height]])
+            .scaleExtent([0.5, 5])
+            .on("zoom", () => chart
+              .select(".root")
+              .attr("transform", event.transform))
+        )
+        .on("wheel", () => event.preventDefault());
   }, [props.height, width]);
+
+  useEffect(() => {
+    if (!container.current || !svg.current || !issues.length) return;
+    select(svg.current)
+      .selectAll("circle")
+        .on("mouseover", (d: any) => {
+          setCurrentIssueId(d.id)
+          select(container.current)
+            .select(".info-panel")
+              .classed("d-none", false);
+        })
+        .on("mousemove", (d: any) => {
+          const position = {
+            left: mouse(svg.current!)[0] + width/2 + 50,
+            top: mouse(svg.current!)[1] + props.height/2 - 128,
+          };
+          select(container.current)
+            .select(".info-panel")
+              .attr("style", `left: ${position.left}px; top: ${position.top}px`);
+        })
+        .on("mouseout", () => {
+          select(container.current)
+            .select(".info-panel")
+              .classed("d-none", true);
+        })
+  }, [issues, props.height, width]);
 
   return (
     <Container ref={container} className={classNames(props.className, "p-0")} fluid>
@@ -187,6 +217,7 @@ const BubbleChart = (props: Props) => {
       <Collapse in={!!issues.length}>
         <Row>
           <Col>
+            <InfoPanel className="info-panel d-none" issueId={currentIssueId} />
             <Figure className="figure-img d-block">
               <svg className="chart chart-bubbles" ref={svg} height={props.height} width={width} viewBox={`${-width/2} ${-props.height/2} ${width} ${props.height}`}>
                 <g className="root">
