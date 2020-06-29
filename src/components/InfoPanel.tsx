@@ -27,6 +27,7 @@ const InfoPanel = (props: Props) => {
   const { unestimatedSize } = useSelector(configSelector);
   const issue = useSelector((state: RootState) => selectIssueById(state, props.issueId));
   const issueType = useSelector((state: RootState) => selectIssueTypeById(state, issue ? issue.issueTypeId : -1));
+  const parentIssue = useSelector((state: RootState) => selectIssueById(state, issue && issue.parentId ? issue.parentId : -1));
   const status = useSelector((state: RootState) => selectStatusById(state, issue ? issue.statusId : -1));
   const statusCategory = useSelector((state: RootState) => selectStatusCategoryById(state, status ? status.statusCategoryId : -1));
 
@@ -77,6 +78,13 @@ const InfoPanel = (props: Props) => {
                 <td>10</td>
               </tr>
             </>
+          }
+          {
+            issue.parentId &&
+            <tr>
+              <td>Parent Issue</td>
+              <td>{parentIssue!.key}</td>
+            </tr>
           }
           {
             issue.storyPoints
