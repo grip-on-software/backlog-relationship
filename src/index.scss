@@ -15,7 +15,7 @@
 }
 
 .link {
-  stroke: $gray-600;
+  stroke: $gray-400;
 }
 
 .issuetype-1, .issuetype-12, .issuetype-10301 {
@@ -36,9 +36,7 @@
 
 .issuetype-8, .issuetype-9, .issuetype-10, .issuetype-20, .issuetype-21, 
 .issuetype-10100, .issuetype-10200, .issuetype-10300 {
-  fill: $gray-200;
-  stroke: $gray-600;
-  stroke-width: 1px;
+  fill: $gray-600;
 }
 
 .issuetype-11, .issuetype-22 {

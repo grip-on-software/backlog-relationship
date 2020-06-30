@@ -30,6 +30,7 @@ interface IssueSchema {
   key: string,
   fields: {
     created: string,
+    customfield_10002: number | null,
     issuelinks: {
       id: string,
       self: string,
@@ -80,7 +81,7 @@ export const fetchIssues = createAsyncThunk(
       try {
         const response: Promise<GetIssuesForBoardSchema> = jira.board.getIssuesForBoard({
           boardId: args.boardId,
-          fields: ["created", "issuelinks", "issuetype", "parent", "priority", "status", "summary"],
+          fields: ["created", "customfield_10002", "issuelinks", "issuetype", "parent", "priority", "status", "summary"],
           maxResults: maxResults,
           startAt: startAt,
         });
@@ -119,6 +120,7 @@ const issuesSlice = createSlice({
                 parentId: issueSchema.fields.parent ? parseInt(issueSchema.fields.parent.id) : undefined,
                 priorityId: parseInt(issueSchema.fields.priority.id),
                 statusId: parseInt(issueSchema.fields.status.id),
+                storyPoints: issueSchema.fields.customfield_10002,
                 summary: issueSchema.fields.summary,
               }) as Issue
             )

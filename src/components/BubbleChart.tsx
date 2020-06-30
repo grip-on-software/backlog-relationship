@@ -8,7 +8,7 @@ import { LoginStatus, authSelector } from "../slices/auth";
 import { configSelector } from "../slices/config";
 import { fetchIssueLinkTypes, selectIssueLinkTypeEntities } from "../slices/issueLinkTypes";
 import { fetchIssueTypes, selectIssueTypeEntities } from "../slices/issueTypes";
-import { Issue, fetchIssues, selectAllIssues, selectIssueEntities } from "../slices/issues";
+import { Issue, fetchIssues, selectAllIssues, selectIssueEntities, selectIssueById } from "../slices/issues";
 import { fetchSprints, selectAllSprints } from "../slices/sprints";
 import { fetchStatusCategories } from "../slices/statusCategories";
 import { fetchStatuses, selectStatusEntities } from "../slices/statuses";
@@ -120,11 +120,21 @@ const BubbleChart = (props: Props) => {
 
   const simulation = useMemo(() => {
     return forceSimulation(nodes)
-      .force("link", forceLink(links).id((d: any) => d.id))
-      .force("charge", forceManyBody())
+      .force("link", forceLink(links)
+        .id((d: any) => d.id)
+      )
+      .force("charge", forceManyBody()
+        .strength((d: any) => {
+          const issue = issueEntities[d.id]!;
+          if (issue.storyPoints) {
+            return -30 - issue.storyPoints;
+          }
+          return -30 - unestimatedSize;
+        })
+      )
       .force("x", forceX())
       .force("y", forceY());
-  }, [nodes, links]);
+  }, [issueEntities, links, nodes, unestimatedSize]);
 
   const link = useMemo(() => {
     if (!svg.current) return;
@@ -153,8 +163,14 @@ const BubbleChart = (props: Props) => {
             return `issuetype-${issueTypeId}`;
           }
         })
-        .attr("r", 5);
-  }, [issueEntities, issueTypeEntities, nodes]);
+        .attr("r", (d: any) => {
+          const { storyPoints } = issueEntities[d.id]!;
+          if (storyPoints) {
+            return storyPoints;
+          }
+          return unestimatedSize;
+        })
+  }, [issueEntities, issueTypeEntities, nodes, unestimatedSize]);
 
   useEffect(() => {
     if (!link || !node) return;
@@ -209,7 +225,13 @@ const BubbleChart = (props: Props) => {
             .select(".info-panel")
               .classed("d-none", true);
         })
-  }, [issues, props.height, width]);
+        .on("click", (d: any) => {
+          const issue = issueEntities[d.id]!;
+          if (event.ctrlKey || event.metaKey) {
+            window.open(`${process.env.REACT_APP_JIRA_URL}/browse/${issue.key}`, "_blank");
+          }
+        })
+  }, [issueEntities, issues, props.height, width]);
 
   return (
     <Container ref={container} className={classNames(props.className, "p-0")} fluid>
