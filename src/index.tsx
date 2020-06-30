@@ -12,9 +12,10 @@ import 'react-bootstrap-typeahead/css/Typeahead-bs4.scss';
 import 'react-bootstrap-range-slider/dist/react-bootstrap-range-slider.css';
 
 const store = configureStore({
-  // middleware: getDefaultMiddleware({
-  //   serializableCheck: false,
-  // }),
+  middleware: getDefaultMiddleware({
+    immutableCheck: false,
+    serializableCheck: false,
+  }),
   reducer: rootReducer
 });
 export type RootState = ReturnType<typeof store.getState>;
