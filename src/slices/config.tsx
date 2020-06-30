@@ -10,7 +10,7 @@ interface State {
 const initialState: State = {
   pastSprints: 5,
   showUnestimatedIssues: true,
-  unestimatedSize: 1,
+  unestimatedSize: 5,
 };
 
 const configSlice = createSlice({
