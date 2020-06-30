@@ -80,10 +80,10 @@ const InfoPanel = (props: Props) => {
             </>
           }
           {
-            issue.parentId &&
+            parentIssue &&
             <tr>
               <td>Parent Issue</td>
-              <td>{parentIssue!.key}</td>
+              <td>{parentIssue.key}</td>
             </tr>
           }
           {
