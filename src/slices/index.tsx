@@ -4,7 +4,8 @@ import alertsReducer from "./alerts";
 import authReducer from "./auth";
 import boardsReducer from "./boards";
 import configReducer from "./config";
-import issuesTypesReducer from "./issueTypes";
+import issueLinkTypesReducer from "./issueLinkTypes";
+import issueTypesReducer from "./issueTypes";
 import issuesReducer from "./issues";
 import sprintsReducer from "./sprints";
 import statusCategoriesReducer from "./statusCategories";
@@ -16,7 +17,8 @@ const rootReducer = combineReducers({
   auth: authReducer,
   boards: boardsReducer,
   config: configReducer,
-  issueTypes: issuesTypesReducer,
+  issueLinkTypes: issueLinkTypesReducer,
+  issueTypes: issueTypesReducer,
   issues: issuesReducer,
   sprints: sprintsReducer,
   statusCategories: statusCategoriesReducer,

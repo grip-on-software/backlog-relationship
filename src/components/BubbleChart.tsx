@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { LoginStatus, authSelector } from "../slices/auth";
 import { configSelector } from "../slices/config";
+import { fetchIssueLinkTypes, selectIssueLinkTypeEntities } from "../slices/issueLinkTypes";
 import { fetchIssueTypes, selectIssueTypeEntities } from "../slices/issueTypes";
 import { Issue, fetchIssues, selectAllIssues, selectIssueEntities } from "../slices/issues";
 import { fetchSprints, selectAllSprints } from "../slices/sprints";
@@ -37,6 +38,7 @@ const BubbleChart = (props: Props) => {
   const sprints = useSelector(selectAllSprints);
   const issues = useSelector(selectAllIssues);
   const issueEntities = useSelector(selectIssueEntities);
+  const issueLinkTypeEntities = useSelector(selectIssueLinkTypeEntities);
   const issueTypeEntities = useSelector(selectIssueTypeEntities);
 
   // Maintain references to container and main SVG element.
@@ -59,6 +61,12 @@ const BubbleChart = (props: Props) => {
 
   // Maintain reference to current issue.
   const [currentIssueId, setCurrentIssueId] = useState(-1);
+
+  // Fetch issue link types on initialization.
+  useEffect(() => {
+    if (LoginStatus.LoggedIn !== loginStatus) return;
+    dispatch(fetchIssueLinkTypes());
+  }, [dispatch, loginStatus]);
 
   // Fetch issue types on initialization.
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { createAsyncThunk, createEntityAdapter, createSlice, EntityState } from "@reduxjs/toolkit";
 
-import { jira } from "./auth";
 import { RootState } from "..";
+import { jira } from "./auth";
 
 interface GetIssuesForBoardSchema {
   expand: string,
@@ -30,6 +30,25 @@ interface IssueSchema {
   key: string,
   fields: {
     created: string,
+    issuelinks: {
+      id: string,
+      self: string,
+      type: {
+        id: string,
+        name: string,
+        inward: string,
+        outward: string,
+        self: string,
+      },
+      inwardIssue?: {
+        id: string,
+        key: string,
+      },
+      outwardIssue?: {
+        id: string,
+        key: string,
+      }
+    },
     issuetype: {
       id: string,
     },
@@ -49,20 +68,22 @@ interface IssueSchema {
 export const fetchIssues = createAsyncThunk(
   "issues/fetch",
   async (args: {boardId: number}) => {
-    let results: GetIssuesForBoardSchema[] = [];
-    let startAt = 0, maxResults = 256, total;
-    while (!total || startAt + maxResults < total) {
+    let results: Promise<GetIssuesForBoardSchema>[] = [];
+    const initialFetch: GetIssuesForBoardSchema = await jira.board.getIssuesForBoard({
+      boardId: args.boardId,
+      fields: ["created"],
+      maxResults: 0,
+      startAt: 0,
+    });
+    let startAt = 0, maxResults = 256, { total } = initialFetch;
+    while (startAt < total) {
       try {
-        const response: GetIssuesForBoardSchema = await jira.board.getIssuesForBoard({
+        const response: Promise<GetIssuesForBoardSchema> = jira.board.getIssuesForBoard({
           boardId: args.boardId,
-          fields: ["created", "issuetype", "parent", "priority", "status", "summary"],
+          fields: ["created", "issuelinks", "issuetype", "parent", "priority", "status", "summary"],
           maxResults: maxResults,
           startAt: startAt,
         });
-        if (response.maxResults < maxResults) {
-          maxResults = response.maxResults;
-        }
-        total = response.total;
         results.push(response);
       } catch (error) {
         throw error;
@@ -70,7 +91,7 @@ export const fetchIssues = createAsyncThunk(
         startAt += maxResults;
       }
     }
-    return results;
+    return Promise.all(results);
   }
 );
 
