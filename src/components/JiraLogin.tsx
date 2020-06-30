@@ -74,7 +74,7 @@ const JiraLogin = () => {
                         <Figure>
                           <Figure.Image
                             height={48}
-                            src={avatarURL || "http://jira.example/jira/secure/useravatar?avatarId=10122"}
+                            src={avatarURL || `${process.env.REACT_APP_JIRA_URL}/secure/useravatar?avatarId=10122`}
                             width={48} />
                         </Figure>
                       </Col>
@@ -93,7 +93,7 @@ const JiraLogin = () => {
                   <Alert variant="info">
                     Please note:
                     <ul className="pl-4">
-                      <li>Your credentials are required to obtain a session token from the JIRA API at <a href="http://jira.example/jira" target="_blank" rel="noopener noreferrer"><code>http://jira.example/jira</code><FontAwesomeIcon icon={faExternalLinkAlt} size="xs" className="ml-1" /></a>.</li>
+                      <li>Your credentials are required to obtain a session token from the JIRA API at <a href={process.env.REACT_APP_JIRA_URL} target="_blank" rel="noopener noreferrer"><code>{process.env.REACT_APP_JIRA_URL}</code><FontAwesomeIcon icon={faExternalLinkAlt} size="xs" className="ml-1" /></a>.</li>
                       <li>Credentials are not stored.</li>
                     </ul>
                   </Alert>

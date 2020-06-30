@@ -2,9 +2,9 @@ const { createProxyMiddleware } = require("http-proxy-middleware");
 
 module.exports = function(app) {
   app.use(
-    "/jira",
+    `/${process.env.REACT_APP_JIRA_PATH}`,
     createProxyMiddleware({
-      target: "http://jira.example",
+      target: process.env.REACT_APP_JIRA_HOST,
       changeOrigin: true,
     })
   )
