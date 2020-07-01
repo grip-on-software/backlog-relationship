@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { event, forceLink, forceManyBody, forceSimulation, forceX, forceY, mouse, select, zoom } from "d3";
+import { event, forceCollide, forceLink, forceManyBody, forceSimulation, forceX, forceY, mouse, select, zoom } from "d3";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Col, Collapse, Container, Figure, Row, Spinner } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
@@ -98,7 +98,24 @@ const BubbleChart = (props: Props) => {
     dispatch(fetchIssues({boardId: boardId}));
   }, [boardId, dispatch]);
 
-  const links = useMemo(() => {
+  const issueLinks = useMemo(() => {
+    const reducer = (acc: Link[], cur: Issue, idx: number, src: Issue[]) => {
+      cur.links.forEach(id => {
+        if (issues.some(issue => issue.id === id)) {
+          acc.push({
+            source: cur.id,
+            target: id,
+          });
+        }
+      });
+      return acc;
+    }
+    return issues
+      .reduce(reducer, [])
+      .map(issueLink => Object.create(issueLink));
+  }, [issues]);
+
+  const taskLinks = useMemo(() => {
     const reducer = (acc: Link[], cur: Issue, idx: number, src: Issue[]) => {
       if (cur.parentId && issues.some(issue => issue.id === cur.parentId)) {
         acc.push({
@@ -110,7 +127,7 @@ const BubbleChart = (props: Props) => {
     }
     return issues
       .reduce(reducer, [])
-      .map(link => Object.create(link));
+      .map(taskLink => Object.create(taskLink));
   }, [issues]);
   
   const nodes = useMemo(() => {
@@ -120,7 +137,10 @@ const BubbleChart = (props: Props) => {
 
   const simulation = useMemo(() => {
     return forceSimulation(nodes)
-      .force("link", forceLink(links)
+      .force("issueLink", forceLink(issueLinks)
+        .id((d: any) => d.id)
+      )
+      .force("taskLink", forceLink(taskLinks)
         .id((d: any) => d.id)
       )
       .force("charge", forceManyBody()
@@ -132,19 +152,39 @@ const BubbleChart = (props: Props) => {
           return -30 - unestimatedSize;
         })
       )
+      .force("collision", forceCollide()
+        .radius((d: any) => {
+          const issue = issueEntities[d.id]!;
+          if (issue.storyPoints) {
+            return issue.storyPoints;
+          }
+          return unestimatedSize;
+        })
+      )
       .force("x", forceX())
       .force("y", forceY());
-  }, [issueEntities, links, nodes, unestimatedSize]);
+  }, [issueEntities, issueLinks, taskLinks, nodes, unestimatedSize]);
 
-  const link = useMemo(() => {
+  const issueLink = useMemo(() => {
     if (!svg.current) return;
     const chart = select(svg.current);
-    return chart.select(".links")
+    return chart.select(".issueLinks")
       .selectAll("line")
-      .data(links, (d: any) => `${d.source.id}-${d.target.id}`)
+      .data(issueLinks, (d: any) => `issueLink-${d.source.id}-${d.target.id}`)
       .join("line")
-        .attr("class", "link");
-  }, [links]);
+        .attr("class", "issueLink")
+        .attr("marker-end", "url(#arrow)");
+  }, [issueLinks]);
+
+  const taskLink = useMemo(() => {
+    if (!svg.current) return;
+    const chart = select(svg.current);
+    return chart.select(".taskLinks")
+      .selectAll("line")
+      .data(taskLinks, (d: any) => `taskLink-${d.source.id}-${d.target.id}`)
+      .join("line")
+        .attr("class", "taskLink");
+  }, [taskLinks]);
 
   const node = useMemo(() => {
     if (!svg.current) return;
@@ -173,9 +213,14 @@ const BubbleChart = (props: Props) => {
   }, [issueEntities, issueTypeEntities, nodes, unestimatedSize]);
 
   useEffect(() => {
-    if (!link || !node) return;
+    if (!issueLink || !taskLink || !node) return;
     simulation.on("tick", () => {
-      link
+      issueLink
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+      taskLink
         .attr("x1", d => d.source.x)
         .attr("y1", d => d.source.y)
         .attr("x2", d => d.target.x)
@@ -184,7 +229,7 @@ const BubbleChart = (props: Props) => {
         .attr("cx", d => d.x)
         .attr("cy", d => d.y);
     })
-  }, [link, node, simulation]);
+  }, [issueLink, node, simulation, taskLink]);
 
   useEffect(() => {
     if (!svg.current) return;
@@ -250,8 +295,21 @@ const BubbleChart = (props: Props) => {
             <InfoPanel className="info-panel d-none" issueId={currentIssueId} />
             <Figure className="figure-img d-block">
               <svg className="chart chart-bubbles" ref={svg} height={props.height} width={width} viewBox={`${-width/2} ${-props.height/2} ${width} ${props.height}`}>
+                <defs>
+                  <marker
+                    id="arrow"
+                    markerHeight="5"
+                    markerWidth="5"
+                    orient="auto-start-reverse"
+                    refX="5"
+                    refY="5"
+                    viewBox="0 0 10 10">
+                    <path d="M 0 0 L 10 5 L 0 10 z"/>
+                  </marker>
+                </defs>
                 <g className="root">
-                  <g className="links"></g>
+                  <g className="issueLinks"></g>
+                  <g className="taskLinks"></g>
                   <g className="nodes"></g>
                 </g>
               </svg>

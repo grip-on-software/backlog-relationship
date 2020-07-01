@@ -14,7 +14,11 @@
   z-index: $zindex-fixed;
 }
 
-.link {
+.issueLink {
+  stroke: $gray-700;
+}
+
+.taskLink {
   stroke: $gray-400;
 }
 

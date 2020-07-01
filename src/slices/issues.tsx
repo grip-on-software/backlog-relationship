@@ -16,6 +16,7 @@ export interface Issue {
   id: number,
   issueTypeId: number,
   key: string,
+  links: [number]
   parentId?: number,
   priorityId: number,
   statusId: number,
@@ -49,7 +50,7 @@ interface IssueSchema {
         id: string,
         key: string,
       }
-    },
+    }[],
     issuetype: {
       id: string,
     },
@@ -117,6 +118,9 @@ const issuesSlice = createSlice({
                 id: parseInt(issueSchema.id),
                 issueTypeId: parseInt(issueSchema.fields.issuetype.id),
                 key: issueSchema.key,
+                links: issueSchema.fields.issuelinks
+                  .filter(issueLink => issueLink.outwardIssue)
+                  .map(issueLink => parseInt(issueLink.outwardIssue!.id)),
                 parentId: issueSchema.fields.parent ? parseInt(issueSchema.fields.parent.id) : undefined,
                 priorityId: parseInt(issueSchema.fields.priority.id),
                 statusId: parseInt(issueSchema.fields.status.id),
