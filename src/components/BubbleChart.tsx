@@ -15,6 +15,7 @@ import { fetchStatuses, selectStatusEntities } from "../slices/statuses";
 import InfoPanel from "./InfoPanel";
 
 interface Link {
+  id?: number,
   source: number,
   target: number,
 }
@@ -38,7 +39,6 @@ const BubbleChart = (props: Props) => {
   const sprints = useSelector(selectAllSprints);
   const issues = useSelector(selectAllIssues);
   const issueEntities = useSelector(selectIssueEntities);
-  const issueLinkTypeEntities = useSelector(selectIssueLinkTypeEntities);
   const issueTypeEntities = useSelector(selectIssueTypeEntities);
 
   // Maintain references to container and main SVG element.
@@ -98,13 +98,26 @@ const BubbleChart = (props: Props) => {
     dispatch(fetchIssues({boardId: boardId}));
   }, [boardId, dispatch]);
 
+  const arrowHeads = useMemo(() => {
+    const reducer = (acc: number[], cur: Issue, idx: number, src: Issue[]) => {
+      if (cur.storyPoints && !acc.includes(cur.storyPoints)) {
+        acc.push(cur.storyPoints);
+      }
+      return acc;
+    }
+    return issues.reduce(reducer, []);
+  }, [issues]);
+
   const issueLinks = useMemo(() => {
     const reducer = (acc: Link[], cur: Issue, idx: number, src: Issue[]) => {
-      cur.links.forEach(id => {
-        if (issues.some(issue => issue.id === id)) {
+      cur.links
+        .filter(link => "outward" === link.direction)
+        .forEach(link => {
+        if (issues.some(issue => issue.id === link.issueId)) {
           acc.push({
+            id: link.id,
             source: cur.id,
-            target: id,
+            target: link.issueId,
           });
         }
       });
@@ -165,16 +178,40 @@ const BubbleChart = (props: Props) => {
       .force("y", forceY());
   }, [issueEntities, issueLinks, taskLinks, nodes, unestimatedSize]);
 
+  const arrowHead = useMemo(() => {
+    if (!svg.current) return;
+    const chart = select(svg.current);
+    return chart.select("defs")
+      .selectAll("marker")
+      .data(arrowHeads, d => `arrowHead-${d}`)
+      .join("marker")
+        .attr("id", d => `arrowHead-${d}`)
+        .attr("markerHeight", "5")
+        .attr("markerWidth", "5")
+        .attr("orient", "auto-start-reverse")
+        .attr("refX", d => d * 2 + 9)
+        .attr("refY", "5")
+        .attr("viewBox", "0 0 10 10")
+      .append("path")
+        .attr("d", "M 0 0 L 10 5 L 0 10 z");
+  }, [arrowHeads]);
+
   const issueLink = useMemo(() => {
     if (!svg.current) return;
     const chart = select(svg.current);
     return chart.select(".issueLinks")
       .selectAll("line")
-      .data(issueLinks, (d: any) => `issueLink-${d.source.id}-${d.target.id}`)
+      .data(issueLinks, (d: any) => `issueLink-${d.id}`)
       .join("line")
         .attr("class", "issueLink")
-        .attr("marker-end", "url(#arrow)");
-  }, [issueLinks]);
+        .attr("marker-end", (d: any) => {
+          const { storyPoints } = issueEntities[d.target.id]!;
+          if (storyPoints) {
+            return `url(#arrowHead-${storyPoints})`;
+          }
+          return `url(#arrowHead-${unestimatedSize})`;
+        });
+  }, [issueEntities, issueLinks, unestimatedSize]);
 
   const taskLink = useMemo(() => {
     if (!svg.current) return;
@@ -295,18 +332,7 @@ const BubbleChart = (props: Props) => {
             <InfoPanel className="info-panel d-none" issueId={currentIssueId} />
             <Figure className="figure-img d-block">
               <svg className="chart chart-bubbles" ref={svg} height={props.height} width={width} viewBox={`${-width/2} ${-props.height/2} ${width} ${props.height}`}>
-                <defs>
-                  <marker
-                    id="arrow"
-                    markerHeight="5"
-                    markerWidth="5"
-                    orient="auto-start-reverse"
-                    refX="5"
-                    refY="5"
-                    viewBox="0 0 10 10">
-                    <path d="M 0 0 L 10 5 L 0 10 z"/>
-                  </marker>
-                </defs>
+                <defs></defs>
                 <g className="root">
                   <g className="issueLinks"></g>
                   <g className="taskLinks"></g>

@@ -5,7 +5,8 @@ import { useSelector } from "react-redux";
 
 import { RootState } from "..";
 import { configSelector } from "../slices/config";
-import { selectIssueById } from "../slices/issues";
+import { selectAllIssues, selectIssueById, selectIssueEntities } from "../slices/issues";
+import { selectIssueLinkTypeEntities } from "../slices/issueLinkTypes";
 import { selectIssueTypeById, IssueTypes } from "../slices/issueTypes";
 import { StatusCategories, selectStatusCategoryById } from "../slices/statusCategories";
 import { selectStatusById } from "../slices/statuses";
@@ -26,6 +27,9 @@ const InfoPanel = (props: Props) => {
 
   const { unestimatedSize } = useSelector(configSelector);
   const issue = useSelector((state: RootState) => selectIssueById(state, props.issueId));
+  const issues = useSelector(selectAllIssues);
+  const issueEntities = useSelector(selectIssueEntities);
+  const issueLinkTypeEntities = useSelector(selectIssueLinkTypeEntities);
   const issueType = useSelector((state: RootState) => selectIssueTypeById(state, issue ? issue.issueTypeId : -1));
   const parentIssue = useSelector((state: RootState) => selectIssueById(state, issue && issue.parentId ? issue.parentId : -1));
   const status = useSelector((state: RootState) => selectStatusById(state, issue ? issue.statusId : -1));
@@ -85,6 +89,22 @@ const InfoPanel = (props: Props) => {
               <td>Parent Issue</td>
               <td>{parentIssue.key}</td>
             </tr>
+          }
+          {
+            issue.links
+              .filter(link => issues.some(issue => issue.id === link.issueId))
+              .map(link => 
+                <tr key={link.id}>
+                  <td className="text-capitalize">
+                    {
+                      "inward" === link.direction
+                      ? issueLinkTypeEntities[link.typeId]!.inward
+                      : issueLinkTypeEntities[link.typeId]!.outward
+                    }
+                  </td>
+                  <td>{issueEntities[link.issueId]!.key}</td>
+                </tr>
+              )
           }
           {
             issue.storyPoints

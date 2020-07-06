@@ -11,12 +11,19 @@ interface GetIssuesForBoardSchema {
   issues: IssueSchema[]
 };
 
+interface IssueLink {
+  direction: "inward" | "outward",
+  id: number,
+  issueId: number,
+  typeId: number,
+}
+
 export interface Issue {
   created: number,
   id: number,
   issueTypeId: number,
   key: string,
-  links: [number]
+  links: IssueLink[],
   parentId?: number,
   priorityId: number,
   statusId: number,
@@ -119,8 +126,12 @@ const issuesSlice = createSlice({
                 issueTypeId: parseInt(issueSchema.fields.issuetype.id),
                 key: issueSchema.key,
                 links: issueSchema.fields.issuelinks
-                  .filter(issueLink => issueLink.outwardIssue)
-                  .map(issueLink => parseInt(issueLink.outwardIssue!.id)),
+                  .map(issueLink => ({
+                    direction: issueLink.inwardIssue ? "inward" : "outward",
+                    id: parseInt(issueLink.id),
+                    issueId: parseInt(issueLink.inwardIssue ? issueLink.inwardIssue.id : issueLink.outwardIssue!.id),
+                    typeId: parseInt(issueLink.type.id),
+                  })),
                 parentId: issueSchema.fields.parent ? parseInt(issueSchema.fields.parent.id) : undefined,
                 priorityId: parseInt(issueSchema.fields.priority.id),
                 statusId: parseInt(issueSchema.fields.status.id),
