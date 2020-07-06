@@ -10,18 +10,25 @@ interface GetAllSprintsSchema {
   values: SprintSchema[]
 };
 
+export enum SprintState {
+  Active = "active",
+  Closed = "closed",
+  Future = "future",
+}
+
 interface Sprint {
   id: number,
   label: string,
   startDate: number,
   endDate: number,
   completeDate: number,
+  state: SprintState,
 };
 
-interface SprintSchema {
+export interface SprintSchema {
   id: number,
   self: string,
-  state: "active" | "future" | "closed",
+  state: SprintState,
   name: string,
   startDate?: string,
   endDate?: string,
@@ -76,6 +83,7 @@ const sprintsSlice = createSlice({
                 startDate: sprintSchema.startDate ? Date.parse(sprintSchema.startDate) : undefined,
                 endDate: sprintSchema.endDate ? Date.parse(sprintSchema.endDate) : undefined,
                 completeDate: sprintSchema.completeDate ? Date.parse(sprintSchema.completeDate) : undefined,
+                state: sprintSchema.state,
               }) as Sprint
             )
           )
