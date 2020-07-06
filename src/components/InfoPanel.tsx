@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import React from "react";
+import { groupBy } from "lodash";
 import { Badge, BadgeProps, Card, Image, Table } from "react-bootstrap";
 import { useSelector } from "react-redux";
 
@@ -91,20 +92,43 @@ const InfoPanel = (props: Props) => {
             </tr>
           }
           {
-            issue.links
-              .filter(link => issues.some(issue => issue.id === link.issueId))
-              .map(link => 
-                <tr key={link.id}>
-                  <td className="text-capitalize">
+            Object.entries(
+              groupBy(
+                issue.links
+                  .filter(
+                    link => issues.some(
+                      issue => issue.id === link.issueId
+                    )
+                  ),
+                "typeId"
+              )
+            ).map(([typeId, links]) => 
+              Object.entries(
+                groupBy(links, "direction")
+              ).map(([direction, links]) => 
+                <tr key={`${typeId}-${direction}`}>
+                  <td className="text-capitalize text-nowrap">
                     {
-                      "inward" === link.direction
-                      ? issueLinkTypeEntities[link.typeId]!.inward
-                      : issueLinkTypeEntities[link.typeId]!.outward
+                      Object.getOwnPropertyDescriptor(
+                        issueLinkTypeEntities[typeId]!,
+                        direction
+                      )?.value
                     }
                   </td>
-                  <td>{issueEntities[link.issueId]!.key}</td>
+                  <td>
+                    {
+                      links.reduce(
+                        (acc, cur) => 
+                          acc.length
+                          ? `${acc}, ${issueEntities[cur.issueId]!.key}`
+                          : issueEntities[cur.issueId]!.key,
+                        ""
+                      )
+                    }
+                  </td>
                 </tr>
               )
+            )
           }
           {
             issue.storyPoints
