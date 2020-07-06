@@ -178,24 +178,6 @@ const BubbleChart = (props: Props) => {
       .force("y", forceY());
   }, [issueEntities, issueLinks, taskLinks, nodes, unestimatedSize]);
 
-  const arrowHead = useMemo(() => {
-    if (!svg.current) return;
-    const chart = select(svg.current);
-    return chart.select("defs")
-      .selectAll("marker")
-      .data(arrowHeads, d => `arrowHead-${d}`)
-      .join("marker")
-        .attr("id", d => `arrowHead-${d}`)
-        .attr("markerHeight", "5")
-        .attr("markerWidth", "5")
-        .attr("orient", "auto-start-reverse")
-        .attr("refX", d => d * 2 + 9)
-        .attr("refY", "5")
-        .attr("viewBox", "0 0 10 10")
-      .append("path")
-        .attr("d", "M 0 0 L 10 5 L 0 10 z");
-  }, [arrowHeads]);
-
   const issueLink = useMemo(() => {
     if (!svg.current) return;
     const chart = select(svg.current);
@@ -248,6 +230,24 @@ const BubbleChart = (props: Props) => {
           return unestimatedSize;
         })
   }, [issueEntities, issueTypeEntities, nodes, unestimatedSize]);
+
+  useEffect(() => {
+    if (!svg.current) return;
+    const chart = select(svg.current);
+    chart.select("defs")
+      .selectAll("marker")
+      .data(arrowHeads, d => `arrowHead-${d}`)
+      .join("marker")
+        .attr("id", d => `arrowHead-${d}`)
+        .attr("markerHeight", "5")
+        .attr("markerWidth", "5")
+        .attr("orient", "auto-start-reverse")
+        .attr("refX", d => d * 2 + 9)
+        .attr("refY", "5")
+        .attr("viewBox", "0 0 10 10")
+      .append("path")
+        .attr("d", "M 0 0 L 10 5 L 0 10 z");
+  }, [arrowHeads]);
 
   useEffect(() => {
     if (!issueLink || !taskLink || !node) return;
@@ -334,6 +334,7 @@ const BubbleChart = (props: Props) => {
               <svg className="chart chart-bubbles" ref={svg} height={props.height} width={width} viewBox={`${-width/2} ${-props.height/2} ${width} ${props.height}`}>
                 <defs></defs>
                 <g className="root">
+                  <g className="sprints"></g>
                   <g className="issueLinks"></g>
                   <g className="taskLinks"></g>
                   <g className="nodes"></g>
