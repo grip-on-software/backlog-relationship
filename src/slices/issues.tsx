@@ -2,6 +2,7 @@ import { createAsyncThunk, createEntityAdapter, createSlice, EntityState } from 
 
 import { RootState } from "..";
 import { jira } from "./auth";
+import { SprintSchema } from "./sprints";
 
 interface GetIssuesForBoardSchema {
   expand: string,
@@ -19,6 +20,7 @@ interface IssueLink {
 }
 
 export interface Issue {
+  closedSprints: number[],
   created: number,
   id: number,
   issueTypeId: number,
@@ -26,6 +28,7 @@ export interface Issue {
   links: IssueLink[],
   parentId?: number,
   priorityId: number,
+  sprintId?: number,
   statusId: number,
   storyPoints?: number
   summary: string,
@@ -37,6 +40,7 @@ interface IssueSchema {
   self: string,
   key: string,
   fields: {
+    closedSprints?: SprintSchema[],
     created: string,
     customfield_10002: number | null,
     issuelinks: {
@@ -67,6 +71,7 @@ interface IssueSchema {
     priority: {
       id: string,
     },
+    sprint?: SprintSchema,
     status: {
       id: string,
     },
@@ -89,7 +94,18 @@ export const fetchIssues = createAsyncThunk(
       try {
         const response: Promise<GetIssuesForBoardSchema> = jira.board.getIssuesForBoard({
           boardId: args.boardId,
-          fields: ["created", "customfield_10002", "issuelinks", "issuetype", "parent", "priority", "status", "summary"],
+          fields: [
+            "closedSprints",
+            "created",
+            "customfield_10002",
+            "issuelinks",
+            "issuetype",
+            "parent",
+            "priority",
+            "sprint",
+            "status",
+            "summary"
+          ],
           maxResults: maxResults,
           startAt: startAt,
         });
@@ -121,19 +137,31 @@ const issuesSlice = createSlice({
             state,
             response.issues.map(
               issueSchema => ({
+                closedSprints: issueSchema.fields.closedSprints
+                  ? issueSchema.fields.closedSprints.map(sprint => sprint.id)
+                  : [],
                 created: Date.parse(issueSchema.fields.created),
                 id: parseInt(issueSchema.id),
                 issueTypeId: parseInt(issueSchema.fields.issuetype.id),
                 key: issueSchema.key,
                 links: issueSchema.fields.issuelinks
                   .map(issueLink => ({
-                    direction: issueLink.inwardIssue ? "inward" : "outward",
+                    direction: issueLink.inwardIssue
+                      ? "inward"
+                      : "outward",
                     id: parseInt(issueLink.id),
-                    issueId: parseInt(issueLink.inwardIssue ? issueLink.inwardIssue.id : issueLink.outwardIssue!.id),
+                    issueId: parseInt(issueLink.inwardIssue
+                      ? issueLink.inwardIssue.id
+                      : issueLink.outwardIssue!.id),
                     typeId: parseInt(issueLink.type.id),
                   })),
-                parentId: issueSchema.fields.parent ? parseInt(issueSchema.fields.parent.id) : undefined,
+                parentId: issueSchema.fields.parent
+                  ? parseInt(issueSchema.fields.parent.id)
+                  : undefined,
                 priorityId: parseInt(issueSchema.fields.priority.id),
+                sprintId: issueSchema.fields.sprint
+                  ? issueSchema.fields.sprint.id
+                  : undefined,
                 statusId: parseInt(issueSchema.fields.status.id),
                 storyPoints: issueSchema.fields.customfield_10002,
                 summary: issueSchema.fields.summary,
