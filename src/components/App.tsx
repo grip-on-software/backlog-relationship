@@ -6,6 +6,7 @@ import { alertsSelector, deleteAlert } from '../slices/alerts';
 import BoardTypeahead from './BoardTypeahead';
 import BubbleChart from './BubbleChart';
 import ConfigForm from './ConfigForm';
+import DatePlayer from './DatePlayer';
 import JiraLogin from './JiraLogin';
 
 const App = () => {
@@ -54,6 +55,9 @@ const App = () => {
                   </Row>
                 </Container>
               </Card.Body>
+              <Card.Footer>
+                <DatePlayer />
+              </Card.Footer>
             </Card>
           </Col>
         </Row>

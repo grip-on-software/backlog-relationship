@@ -7,6 +7,7 @@ import configReducer from "./config";
 import issueLinkTypesReducer from "./issueLinkTypes";
 import issueTypesReducer from "./issueTypes";
 import issuesReducer from "./issues";
+import playerReducer from './player';
 import sprintsReducer from "./sprints";
 import statusCategoriesReducer from "./statusCategories";
 import statusesReducer from "./statuses";
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   issueLinkTypes: issueLinkTypesReducer,
   issueTypes: issueTypesReducer,
   issues: issuesReducer,
+  player: playerReducer,
   sprints: sprintsReducer,
   statusCategories: statusCategoriesReducer,
   statuses: statusesReducer,
