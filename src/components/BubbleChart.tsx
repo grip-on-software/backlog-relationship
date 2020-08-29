@@ -6,12 +6,12 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { LoginStatus, authSelector } from "../slices/auth";
 import { configSelector } from "../slices/config";
-import { fetchIssueLinkTypes, selectIssueLinkTypeEntities } from "../slices/issueLinkTypes";
+import { fetchIssueLinkTypes } from "../slices/issueLinkTypes";
 import { fetchIssueTypes, selectIssueTypeEntities } from "../slices/issueTypes";
-import { Issue, fetchIssues, selectAllIssues, selectIssueEntities, selectIssueById } from "../slices/issues";
-import { fetchSprints, selectAllSprints } from "../slices/sprints";
+import { Issue, fetchIssues, selectAllIssues, selectIssueEntities } from "../slices/issues";
+import { fetchSprints, selectAllSprints, selectSprintEntities } from "../slices/sprints";
 import { fetchStatusCategories } from "../slices/statusCategories";
-import { fetchStatuses, selectStatusEntities } from "../slices/statuses";
+import { fetchStatuses } from "../slices/statuses";
 import InfoPanel from "./InfoPanel";
 
 interface Link {
@@ -35,8 +35,9 @@ const BubbleChart = (props: Props) => {
 
   const dispatch = useDispatch();
   const { loginStatus } = useSelector(authSelector);
-  const { boardId, pastSprints, showUnestimatedIssues, unestimatedSize } = useSelector(configSelector);
+  const { boardId, numberOfPastSprints, showUnestimatedIssues, unestimatedSize } = useSelector(configSelector);
   const sprints = useSelector(selectAllSprints);
+  const sprintEntities = useSelector(selectSprintEntities);
   const issues = useSelector(selectAllIssues);
   const issueEntities = useSelector(selectIssueEntities);
   const issueTypeEntities = useSelector(selectIssueTypeEntities);
@@ -98,6 +99,34 @@ const BubbleChart = (props: Props) => {
     dispatch(fetchIssues({boardId: boardId}));
   }, [boardId, dispatch]);
 
+  // Get list of sprints sorted by .
+  const pastSprints = useMemo(() => {
+    return sprints.sort((a, b) => {
+      if (a.completeDate) {
+        if (b.completeDate) {
+          return a.completeDate - b.completeDate;
+        } else {
+          return -1;
+        }
+      } else {
+        if (b.completeDate) {
+          return 1;
+        } else {
+          return a.id - b.id;
+        }
+      }
+    });
+  }, [sprints]);
+
+  // Get filtered issues based on configuration.
+  const configuredIssues = useMemo(() => {
+    return issues
+      .filter(issue => showUnestimatedIssues ? true : issue.storyPoints)
+      .filter(issue => pastSprints
+        .slice(-numberOfPastSprints)
+        .some(sprint => issue.sprintId === sprint.id || issue.closedSprintIds.includes(sprint.id)));
+  }, [issues, numberOfPastSprints, pastSprints, showUnestimatedIssues]);
+
   const arrowHeads = useMemo(() => {
     const reducer = (acc: number[], cur: Issue, idx: number, src: Issue[]) => {
       if (cur.storyPoints && !acc.includes(cur.storyPoints)) {
@@ -105,15 +134,15 @@ const BubbleChart = (props: Props) => {
       }
       return acc;
     }
-    return issues.reduce(reducer, []);
-  }, [issues]);
+    return configuredIssues.reduce(reducer, []);
+  }, [configuredIssues]);
 
   const issueLinks = useMemo(() => {
     const reducer = (acc: Link[], cur: Issue, idx: number, src: Issue[]) => {
       cur.links
         .filter(link => "outward" === link.direction)
         .forEach(link => {
-        if (issues.some(issue => issue.id === link.issueId)) {
+        if (configuredIssues.some(issue => issue.id === link.issueId)) {
           acc.push({
             id: link.id,
             source: cur.id,
@@ -123,14 +152,14 @@ const BubbleChart = (props: Props) => {
       });
       return acc;
     }
-    return issues
+    return configuredIssues
       .reduce(reducer, [])
       .map(issueLink => Object.create(issueLink));
-  }, [issues]);
+  }, [configuredIssues]);
 
   const taskLinks = useMemo(() => {
     const reducer = (acc: Link[], cur: Issue, idx: number, src: Issue[]) => {
-      if (cur.parentId && issues.some(issue => issue.id === cur.parentId)) {
+      if (cur.parentId && configuredIssues.some(issue => issue.id === cur.parentId)) {
         acc.push({
           source: cur.parentId,
           target: cur.id,
@@ -138,18 +167,18 @@ const BubbleChart = (props: Props) => {
       }
       return acc;
     }
-    return issues
+    return configuredIssues
       .reduce(reducer, [])
       .map(taskLink => Object.create(taskLink));
-  }, [issues]);
+  }, [configuredIssues]);
   
-  const nodes = useMemo(() => {
-    return issues
+  const issueNodes = useMemo(() => {
+    return configuredIssues
       .map(issue => Object.create({id: issue.id}))
-    }, [issues]);
+    }, [configuredIssues]);
 
-  const simulation = useMemo(() => {
-    return forceSimulation(nodes)
+  const issueSimulation = useMemo(() => {
+    return forceSimulation(issueNodes)
       .force("issueLink", forceLink(issueLinks)
         .id((d: any) => d.id)
       )
@@ -176,7 +205,7 @@ const BubbleChart = (props: Props) => {
       )
       .force("x", forceX())
       .force("y", forceY());
-  }, [issueEntities, issueLinks, taskLinks, nodes, unestimatedSize]);
+  }, [issueEntities, issueLinks, taskLinks, issueNodes, unestimatedSize]);
 
   const issueLink = useMemo(() => {
     if (!svg.current) return;
@@ -205,12 +234,12 @@ const BubbleChart = (props: Props) => {
         .attr("class", "taskLink");
   }, [taskLinks]);
 
-  const node = useMemo(() => {
+  const issueNode = useMemo(() => {
     if (!svg.current) return;
     const chart = select(svg.current);
-    return chart.select(".nodes")
+    return chart.select(".issues")
       .selectAll("circle")
-      .data(nodes, (d: any) => d.id)
+      .data(issueNodes, (d: any) => d.id)
       .join("circle")
         .attr("class", d => {
           let issueTypeId;
@@ -229,7 +258,7 @@ const BubbleChart = (props: Props) => {
           }
           return unestimatedSize;
         })
-  }, [issueEntities, issueTypeEntities, nodes, unestimatedSize]);
+  }, [issueEntities, issueTypeEntities, issueNodes, unestimatedSize]);
 
   useEffect(() => {
     if (!svg.current) return;
@@ -250,8 +279,8 @@ const BubbleChart = (props: Props) => {
   }, [arrowHeads]);
 
   useEffect(() => {
-    if (!issueLink || !taskLink || !node) return;
-    simulation.on("tick", () => {
+    if (!issueLink || !taskLink || !issueNode) return;
+    issueSimulation.on("tick", () => {
       issueLink
         .attr("x1", d => d.source.x)
         .attr("y1", d => d.source.y)
@@ -262,11 +291,11 @@ const BubbleChart = (props: Props) => {
         .attr("y1", d => d.source.y)
         .attr("x2", d => d.target.x)
         .attr("y2", d => d.target.y);
-      node
+      issueNode
         .attr("cx", d => d.x)
         .attr("cy", d => d.y);
     })
-  }, [issueLink, node, simulation, taskLink]);
+  }, [issueLink, issueNode, issueSimulation, taskLink]);
 
   useEffect(() => {
     if (!svg.current) return;
@@ -284,16 +313,19 @@ const BubbleChart = (props: Props) => {
   }, [props.height, width]);
 
   useEffect(() => {
-    if (!container.current || !svg.current || !issues.length) return;
+    if (!container.current || !svg.current || !configuredIssues.length) return;
     select(svg.current)
       .selectAll("circle")
         .on("mouseover", (d: any) => {
-          setCurrentIssueId(d.id)
+          setCurrentIssueId(d.id);
           select(container.current)
             .select(".info-panel")
               .classed("d-none", false);
         })
         .on("mousemove", (d: any) => {
+          if (event.ctrlKey || event.metaKey) {
+            console.log("ye");
+          }
           const position = {
             left: mouse(svg.current!)[0] + width/2 + 50,
             top: mouse(svg.current!)[1] + props.height/2 - 128,
@@ -313,11 +345,11 @@ const BubbleChart = (props: Props) => {
             window.open(`${process.env.REACT_APP_JIRA_URL}/browse/${issue.key}`, "_blank");
           }
         })
-  }, [issueEntities, issues, props.height, width]);
+  }, [issueEntities, configuredIssues, props.height, width]);
 
   return (
     <Container ref={container} className={classNames(props.className, "p-0")} fluid>
-      <Collapse in={!!boardId && !issues.length} unmountOnExit>
+      <Collapse in={!!boardId && !configuredIssues.length} unmountOnExit>
         <Row>
           <Col>
             <Alert variant="info">
@@ -326,7 +358,7 @@ const BubbleChart = (props: Props) => {
           </Col>
         </Row>
       </Collapse>
-      <Collapse in={!!issues.length}>
+      <Collapse in={!!configuredIssues.length}>
         <Row>
           <Col>
             <InfoPanel className="info-panel d-none" issueId={currentIssueId} />
@@ -334,10 +366,9 @@ const BubbleChart = (props: Props) => {
               <svg className="chart chart-bubbles" ref={svg} height={props.height} width={width} viewBox={`${-width/2} ${-props.height/2} ${width} ${props.height}`}>
                 <defs></defs>
                 <g className="root">
-                  <g className="sprints"></g>
                   <g className="issueLinks"></g>
                   <g className="taskLinks"></g>
-                  <g className="nodes"></g>
+                  <g className="issues"></g>
                 </g>
               </svg>
             </Figure>

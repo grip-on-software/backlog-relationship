@@ -20,7 +20,7 @@ interface IssueLink {
 }
 
 export interface Issue {
-  closedSprints: number[],
+  closedSprintIds: number[],
   created: number,
   id: number,
   issueTypeId: number,
@@ -137,7 +137,7 @@ const issuesSlice = createSlice({
             state,
             response.issues.map(
               issueSchema => ({
-                closedSprints: issueSchema.fields.closedSprints
+                closedSprintIds: issueSchema.fields.closedSprints
                   ? issueSchema.fields.closedSprints.map(sprint => sprint.id)
                   : [],
                 created: Date.parse(issueSchema.fields.created),

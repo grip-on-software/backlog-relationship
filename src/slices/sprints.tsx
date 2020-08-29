@@ -19,9 +19,9 @@ export enum SprintState {
 interface Sprint {
   id: number,
   label: string,
-  startDate: number,
-  endDate: number,
-  completeDate: number,
+  startDate?: number,
+  endDate?: number,
+  completeDate?: number,
   state: SprintState,
 };
 
@@ -95,6 +95,7 @@ const sprintsSlice = createSlice({
 
 export const {
   selectAll: selectAllSprints,
+  selectEntities: selectSprintEntities,
 } = sprintsAdapter.getSelectors<RootState>(state => state.sprints);
 
 export default sprintsSlice.reducer;
