@@ -2,13 +2,13 @@ import React, { useEffect, useRef } from 'react';
 import { Card, Col, Form, Row, Collapse } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { configSelector, toggleUnestimatedIssues, setNumberOfPastSprints, setUnestimatedSize } from '../slices/config';
+import { configSelector, toggleUnestimatedIssues, setNumberOfPastSprintsToShow, setUnestimatedSize } from '../slices/config';
 import { selectAllSprints } from '../slices/sprints';
 
 const ConfigForm = () => {
 
   const dispatch = useDispatch();
-  const { boardId, numberOfPastSprints, showUnestimatedIssues, unestimatedSize } = useSelector(configSelector);
+  const { boardId, numberOfPastSprintsToShow, showUnestimatedIssues, unestimatedSize } = useSelector(configSelector);
   const sprints = useSelector(selectAllSprints);
 
   const pastSprintsNumber = useRef(null);
@@ -17,7 +17,7 @@ const ConfigForm = () => {
   const handlePastSprintChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(event.target.value);
     if (isNaN(value) || 0 > value) return;
-    dispatch(setNumberOfPastSprints(value));
+    dispatch(setNumberOfPastSprintsToShow(value));
   }
 
   const handleUnestimatedSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,9 +27,9 @@ const ConfigForm = () => {
   }
 
   useEffect(() => {
-    (pastSprintsNumber.current as unknown as HTMLInputElement).value = numberOfPastSprints.toString();
-    (pastSprintsRange.current as unknown as HTMLInputElement).value = numberOfPastSprints.toString();
-  }, [numberOfPastSprints]);
+    (pastSprintsNumber.current as unknown as HTMLInputElement).value = numberOfPastSprintsToShow.toString();
+    (pastSprintsRange.current as unknown as HTMLInputElement).value = numberOfPastSprintsToShow.toString();
+  }, [numberOfPastSprintsToShow]);
 
   useEffect(() => {
     if (!sprints.length) return;
@@ -44,7 +44,7 @@ const ConfigForm = () => {
         <Row>
           <Col className="d-flex align-items-center pr-0" xs="3" sm="2" lg="1">
             <Form.Control
-              defaultValue={numberOfPastSprints}
+              defaultValue={numberOfPastSprintsToShow}
               disabled={!sprints.length}
               id="pastSprintsNumber"
               min={sprints.length ? 1 : 0}
@@ -57,7 +57,7 @@ const ConfigForm = () => {
           <Col className="d-flex align-items-center" xs="9" sm="10" lg="11">
             <Form.Control
               custom
-              defaultValue={numberOfPastSprints}
+              defaultValue={numberOfPastSprintsToShow}
               disabled={!sprints.length}
               id="pastSprintsRange"
               min={sprints.length ? 1 : 0}

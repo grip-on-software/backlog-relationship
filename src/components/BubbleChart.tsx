@@ -8,8 +8,8 @@ import { LoginStatus, authSelector } from "../slices/auth";
 import { configSelector } from "../slices/config";
 import { fetchIssueLinkTypes } from "../slices/issueLinkTypes";
 import { fetchIssueTypes, selectIssueTypeEntities } from "../slices/issueTypes";
-import { Issue, fetchIssues, selectAllIssues, selectIssueEntities } from "../slices/issues";
-import { fetchSprints, selectAllSprints, selectSprintEntities } from "../slices/sprints";
+import { Issue, fetchIssuesForSprint, selectAllIssues, selectIssueEntities, selectIssueIds } from "../slices/issues";
+import { fetchSprints, selectAllSprints, selectSprintEntities, selectSprintIds } from "../slices/sprints";
 import { fetchStatusCategories } from "../slices/statusCategories";
 import { fetchStatuses } from "../slices/statuses";
 import InfoPanel from "./InfoPanel";
@@ -35,15 +35,17 @@ const BubbleChart = (props: Props) => {
 
   const dispatch = useDispatch();
   const { loginStatus } = useSelector(authSelector);
-  const { boardId, numberOfPastSprints, showUnestimatedIssues, unestimatedSize } = useSelector(configSelector);
+  const { boardId, numberOfPastSprintsToShow, showUnestimatedIssues, unestimatedSize } = useSelector(configSelector);
   const sprints = useSelector(selectAllSprints);
   const sprintEntities = useSelector(selectSprintEntities);
+  const sprintIds = useSelector(selectSprintIds);
   const issues = useSelector(selectAllIssues);
   const issueEntities = useSelector(selectIssueEntities);
+  const issueIds = useSelector(selectIssueIds);
   const issueTypeEntities = useSelector(selectIssueTypeEntities);
 
   // Maintain references to container and main SVG element.
-  const container = useRef<(HTMLElement & Figure<"figure">)>(null);
+  const container = useRef<(HTMLDivElement)>(null);
   const svg = useRef<SVGSVGElement>(null);
   
   // Ensure responsive chart width.
@@ -93,89 +95,78 @@ const BubbleChart = (props: Props) => {
     dispatch(fetchSprints({boardId: boardId}));
   }, [boardId, dispatch]);
 
-  // Fetch issues after board has changed.
-  useEffect(() => {
-    if (!boardId) return;
-    dispatch(fetchIssues({boardId: boardId}));
-  }, [boardId, dispatch]);
+  const lastSprintIds = useMemo(() => {
+    return sprintIds.slice(0, numberOfPastSprintsToShow);
+  }, [numberOfPastSprintsToShow, sprintIds]);
 
-  // Get list of sprints sorted by .
-  const pastSprints = useMemo(() => {
-    return sprints.sort((a, b) => {
-      if (a.completeDate) {
-        if (b.completeDate) {
-          return a.completeDate - b.completeDate;
-        } else {
-          return -1;
-        }
-      } else {
-        if (b.completeDate) {
-          return 1;
-        } else {
-          return a.id - b.id;
-        }
-      }
-    });
-  }, [sprints]);
+  // Fetch issues after sprints have changed.
+  useEffect(() => {
+    lastSprintIds.forEach(sprintId => dispatch(fetchIssuesForSprint({sprintId: sprintId as number})))
+  }, [dispatch, lastSprintIds]);
 
   // Get filtered issues based on configuration.
-  const configuredIssues = useMemo(() => {
-    return issues
-      .filter(issue => showUnestimatedIssues ? true : issue.storyPoints)
-      .filter(issue => pastSprints
-        .slice(-numberOfPastSprints)
-        .some(sprint => issue.sprintId === sprint.id || issue.closedSprintIds.includes(sprint.id)));
-  }, [issues, numberOfPastSprints, pastSprints, showUnestimatedIssues]);
+  const configuredIssueIds = useMemo(() => {
+    return (issueIds as number[])
+      .filter(issueId => showUnestimatedIssues ? true : issueEntities[issueId]!.storyPoints)
+      .filter(issueId => lastSprintIds
+        .some(sprintId => 
+          issueEntities[issueId]!.sprintId === sprintId || 
+          issueEntities[issueId]!.closedSprintIds.includes(sprintId as number)));
+  }, [issueEntities, issueIds, lastSprintIds, showUnestimatedIssues]);
 
+  // Declare arrowheads for issue relationships.
   const arrowHeads = useMemo(() => {
-    const reducer = (acc: number[], cur: Issue, idx: number, src: Issue[]) => {
-      if (cur.storyPoints && !acc.includes(cur.storyPoints)) {
-        acc.push(cur.storyPoints);
+    const reducer = (acc: number[], cur: number, idx: number, src: number[]) => {
+      const currentIssue = issueEntities[cur]!;
+      if (currentIssue.storyPoints && !acc.includes(currentIssue.storyPoints)) {
+        acc.push(currentIssue.storyPoints);
       }
       return acc;
     }
-    return configuredIssues.reduce(reducer, []);
-  }, [configuredIssues]);
+    return configuredIssueIds.reduce(reducer, []);
+  }, [configuredIssueIds, issueEntities]);
 
   const issueLinks = useMemo(() => {
-    const reducer = (acc: Link[], cur: Issue, idx: number, src: Issue[]) => {
-      cur.links
+    const reducer = (acc: Link[], cur: number, idx: number, src: number[]) => {
+      const currentIssue = issueEntities[cur]!;
+      currentIssue.links
         .filter(link => "outward" === link.direction)
         .forEach(link => {
-        if (configuredIssues.some(issue => issue.id === link.issueId)) {
-          acc.push({
-            id: link.id,
-            source: cur.id,
-            target: link.issueId,
-          });
-        }
-      });
+          if (configuredIssueIds.some(issueId => issueId === link.issueId)) {
+            acc.push({
+              id: link.id,
+              source: currentIssue.id,
+              target: link.issueId,
+            });
+          }
+        });
       return acc;
     }
-    return configuredIssues
+    return configuredIssueIds
       .reduce(reducer, [])
       .map(issueLink => Object.create(issueLink));
-  }, [configuredIssues]);
+  }, [configuredIssueIds, issueEntities]);
 
   const taskLinks = useMemo(() => {
-    const reducer = (acc: Link[], cur: Issue, idx: number, src: Issue[]) => {
-      if (cur.parentId && configuredIssues.some(issue => issue.id === cur.parentId)) {
+    const reducer = (acc: Link[], cur: number, idx: number, src: number[]) => {
+      const currentIssue = issueEntities[cur]!;
+      if (currentIssue.parentId && configuredIssueIds.some(issueId => issueId === currentIssue.parentId)) {
         acc.push({
-          source: cur.parentId,
-          target: cur.id,
+          source: currentIssue.parentId,
+          target: currentIssue.id,
         });
       }
       return acc;
     }
-    return configuredIssues
+    return configuredIssueIds
       .reduce(reducer, [])
       .map(taskLink => Object.create(taskLink));
-  }, [configuredIssues]);
+  }, [configuredIssueIds, issueEntities]);
   
   const issueNodes = useMemo(() => {
-    return configuredIssues
-      .map(issue => Object.create({id: issue.id}))
-    }, [configuredIssues]);
+    return configuredIssueIds
+      .map(issueId => Object.create({id: issueId}))
+    }, [configuredIssueIds]);
 
   const issueSimulation = useMemo(() => {
     return forceSimulation(issueNodes)
@@ -313,7 +304,7 @@ const BubbleChart = (props: Props) => {
   }, [props.height, width]);
 
   useEffect(() => {
-    if (!container.current || !svg.current || !configuredIssues.length) return;
+    if (!container.current || !svg.current || !configuredIssueIds.length) return;
     select(svg.current)
       .selectAll("circle")
         .on("mouseover", (d: any) => {
@@ -345,11 +336,11 @@ const BubbleChart = (props: Props) => {
             window.open(`${process.env.REACT_APP_JIRA_URL}/browse/${issue.key}`, "_blank");
           }
         })
-  }, [issueEntities, configuredIssues, props.height, width]);
+  }, [issueEntities, configuredIssueIds, props.height, width]);
 
   return (
     <Container ref={container} className={classNames(props.className, "p-0")} fluid>
-      <Collapse in={!!boardId && !configuredIssues.length} unmountOnExit>
+      <Collapse in={!!boardId && !configuredIssueIds.length} unmountOnExit>
         <Row>
           <Col>
             <Alert variant="info">
@@ -358,7 +349,7 @@ const BubbleChart = (props: Props) => {
           </Col>
         </Row>
       </Collapse>
-      <Collapse in={!!configuredIssues.length}>
+      <Collapse in={!!configuredIssueIds.length}>
         <Row>
           <Col>
             <InfoPanel className="info-panel d-none" issueId={currentIssueId} />

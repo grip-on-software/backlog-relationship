@@ -3,14 +3,14 @@ import { createSlice } from '@reduxjs/toolkit';
 interface State {
   boardId?: number,
   date: number,
-  numberOfPastSprints: number,
+  numberOfPastSprintsToShow: number,
   showUnestimatedIssues: boolean,
   unestimatedSize: number,
 }
 
 const initialState: State = {
   date: 0,
-  numberOfPastSprints: 3,
+  numberOfPastSprintsToShow: 3,
   showUnestimatedIssues: true,
   unestimatedSize: 5,
 };
@@ -25,8 +25,8 @@ const configSlice = createSlice({
     setDate: (state: State, { payload }: { payload: number }) => {
       state.date = payload
     },
-    setNumberOfPastSprints: (state: State, { payload }: { payload: number }) => {
-      state.numberOfPastSprints = payload
+    setNumberOfPastSprintsToShow: (state: State, { payload }: { payload: number }) => {
+      state.numberOfPastSprintsToShow = payload
     },
     setUnestimatedSize: (state: State, { payload }: { payload: number }) => {
       state.unestimatedSize = payload
@@ -37,6 +37,6 @@ const configSlice = createSlice({
   },
 });
 
-export const { setBoard, setDate, setNumberOfPastSprints, setUnestimatedSize, toggleUnestimatedIssues } = configSlice.actions;
+export const { setBoard, setDate, setNumberOfPastSprintsToShow, setUnestimatedSize, toggleUnestimatedIssues } = configSlice.actions;
 export const configSelector = (state: any) => state.config as State;
 export default configSlice.reducer;

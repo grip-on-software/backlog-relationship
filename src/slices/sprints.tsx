@@ -62,14 +62,40 @@ export const fetchSprints = createAsyncThunk(
   }
 );
 
-const sprintsAdapter = createEntityAdapter<Sprint>();
+const sprintsAdapter = createEntityAdapter<Sprint>({
+  sortComparer: (a, b) => {
+    if (a.completeDate) {
+      if (b.completeDate) {
+        return b.completeDate - a.completeDate;
+      } else {
+        return 1;
+      }
+    } else {
+      if (b.completeDate) {
+        return -1;
+      } else {
+        if (a.startDate) {
+          if (b.startDate) {
+            return b.startDate - a.startDate;
+          } else {
+            return 1;
+          }
+        } else {
+          if (b.startDate) {
+            return -1;
+          } else {
+            return b.id - a.id;
+          }
+        }
+      }
+    }
+  }
+});
 
 const sprintsSlice = createSlice({
   name: "sprints",
   initialState: sprintsAdapter.getInitialState(),
-  reducers: {
-
-  },
+  reducers: {},
   extraReducers: builder => {
     builder.addCase(
       fetchSprints.fulfilled,
@@ -96,6 +122,7 @@ const sprintsSlice = createSlice({
 export const {
   selectAll: selectAllSprints,
   selectEntities: selectSprintEntities,
+  selectIds: selectSprintIds,
 } = sprintsAdapter.getSelectors<RootState>(state => state.sprints);
 
 export default sprintsSlice.reducer;

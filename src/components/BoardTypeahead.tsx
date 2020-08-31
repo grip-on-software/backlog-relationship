@@ -38,7 +38,7 @@ const BoardTypeahead = (props: Props) => {
       <Form>
         <Form.Group>
           <Typeahead
-            bsSize="lg"
+            size="lg"
             id="board"
             options={boards}
             onChange={handleChange}
