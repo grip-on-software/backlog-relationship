@@ -1,4 +1,8 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app), uses [TypeScript](https://www.typescriptlang.org) and relies on [Redux Toolkit](https://redux-toolkit.js.org/). The latter is an opinionated toolset for building Redux apps quickly and efficiently. It makes use of the [JIRA Server platform REST API](https://docs.atlassian.com/software/jira/docs/api/REST/8.3.4/) and the [JIRA Agile Server REST API](https://docs.atlassian.com/jira-software/REST/8.3.0/) through the [`jira-connector` package](https://www.npmjs.com/package/jira-connector) available from npm.
+
+## Developer notes
+
+Please make sure the repo includes the `.env.development` and `.env.production` files with the right settings for the targeted JIRA Server installation. Due to Content Security Policy restrictions, this project accesses the API endpoints for the targeted JIRA installation through simple proxy middleware that is set up in `setupProxy.js`. Credentials for the API are not set up in the backend in order to minimize security risks.
 
 ## Available Scripts
 
