@@ -1,4 +1,16 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app), uses [TypeScript](https://www.typescriptlang.org) and relies on [Redux Toolkit](https://redux-toolkit.js.org/). The latter is an opinionated toolset for building Redux apps quickly and efficiently. It makes use of the [JIRA Server platform REST API](https://docs.atlassian.com/software/jira/docs/api/REST/8.3.4/) and the [JIRA Agile Server REST API](https://docs.atlassian.com/jira-software/REST/8.3.0/) through the [`jira-connector` package](https://www.npmjs.com/package/jira-connector) available from npm.
+# Product backlog relationship chart
+
+This project was bootstrapped with [Create React 
+App](https://github.com/facebook/create-react-app), uses 
+[TypeScript](https://www.typescriptlang.org) and relies on [Redux 
+Toolkit](https://redux-toolkit.js.org/). The latter is an opinionated toolset 
+for building Redux apps quickly and efficiently. It makes use of the [JIRA 
+Server platform REST 
+API](https://docs.atlassian.com/software/jira/docs/api/REST/8.3.4/) and the 
+[JIRA Agile Server REST 
+API](https://docs.atlassian.com/jira-software/REST/8.3.0/) through the 
+[`jira-connector` package](https://www.npmjs.com/package/jira-connector) 
+available from npm.
 
 ## Developer notes
 
